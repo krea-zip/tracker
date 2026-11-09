@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.scss';
 	import SiteBar from '$lib/site/SiteBar.svelte';
+	import DesktopOnly from '$lib/ui/DesktopOnly.svelte';
 	import { provideSiteActions, type SiteActions } from '$lib/site/navigation';
 	const siteActions = $state<SiteActions>({});
 	provideSiteActions(siteActions);
@@ -42,5 +43,6 @@
 	});
 </script>
 
+<DesktopOnly />
 <SiteBar />
 {@render children()}
