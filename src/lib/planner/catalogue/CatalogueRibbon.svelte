@@ -56,6 +56,7 @@
 		padding: 0.4rem 1.4rem;
 		font-size: 1.2rem;
 		color: var(--color-text-muted);
+		background: var(--color-sunken);
 		border-bottom: 1px solid var(--color-border-light);
 		contain: inline-size;
 	}

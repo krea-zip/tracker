@@ -142,6 +142,8 @@
 		// stays, unseen, for a later state to recolour, and then the ring
 		// steps aside
 		&.now {
+			// the brightest cell on the board, faintly in the student's colour
+			background: color-mix(in srgb, var(--color-now) 7%, var(--color-grid-cell-now));
 			outline: 2px solid transparent;
 			outline-offset: -3px;
 
@@ -155,7 +157,7 @@
 				mask:
 					linear-gradient(#000 0 0) content-box exclude,
 					linear-gradient(#000 0 0);
-				opacity: 0.5; // a quiet ring: it marks where you are, it isn't a warning
+				opacity: 0.8; // it marks where you are; a warning's red dashes still take over from it
 				pointer-events: none;
 				transition: opacity 0.25s ease;
 			}

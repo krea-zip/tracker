@@ -195,6 +195,7 @@
 				<div
 					class="placed"
 					data-type={type}
+					class:short={span.row === 1}
 					class:flagged={plan.flaggedCodes.has(code)}
 					class:is-audit={plan.isAudit(code)}
 					class:is-attempt={isAttemptId(code)}
@@ -676,6 +677,42 @@
 
 		&:hover .x {
 			display: block;
+		}
+	}
+
+	// a course of 3 credits or fewer is one row tall, too short to stack code,
+	// title and credits: the code on top, then the title on one line with the
+	// credits at its end (the top-right corner stays free for the ×)
+	.placed.short {
+		.course-open {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			grid-template-areas:
+				'code code'
+				'title credits';
+			align-content: start;
+			align-items: baseline;
+			gap: 0.4rem 1rem;
+
+			&:not(:has(.code)) {
+				grid-template-areas: 'title credits';
+			}
+		}
+
+		.code {
+			grid-area: code;
+		}
+
+		.title {
+			grid-area: title;
+			min-width: 0;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+		}
+
+		.credits {
+			grid-area: credits;
+			margin-top: 0;
 		}
 	}
 

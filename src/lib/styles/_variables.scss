@@ -80,6 +80,8 @@
 	--color-hover-medium: rgba(150, 106, 120, 0.08);
 	--color-active: rgba(150, 106, 120, 0.12);
 	--color-subtle: rgba(150, 106, 120, 0.1);
+	// a strip set a step down into the surface it sits on (the catalogue's sort row)
+	--color-sunken: rgba(120, 84, 96, 0.055);
 
 	// ── Controls ──
 	// every tick box in the app (4yup, catalogue filters, the grid's label
@@ -216,7 +218,10 @@
 	// while dragging, the slots a course fits cleanly light up mint
 	--color-drop-ok: #d9f4e8;
 	--color-drop-ok-edge: #9fd4bd;
-	--color-grid-cell: #e1e3e8;
+	--color-grid-cell: #e6e8ec;
+	// the trimester you're in now: a lit cell, near white, that the student's
+	// own colour is mixed into (see TrimesterCell)
+	--color-grid-cell-now: #fbfcfd;
 	--color-drop-hint: rgba(150, 106, 120, 0.22);
 
 	// ── Backdrop ──
@@ -268,6 +273,7 @@
 	--color-hover-medium: rgba(255, 226, 236, 0.08);
 	--color-active: rgba(255, 226, 236, 0.12);
 	--color-subtle: rgba(255, 226, 236, 0.1);
+	--color-sunken: rgba(0, 0, 0, 0.16);
 
 	--color-control: #a4658a;
 	--color-control-deep: #c78fae;
@@ -338,6 +344,7 @@
 	--color-drop-ok: #26443d;
 	--color-drop-ok-edge: #4a7d6d;
 	--color-grid-cell: #262a30;
+	--color-grid-cell-now: #30353d;
 	--color-drop-hint: rgba(230, 190, 205, 0.16);
 
 	--color-backdrop: rgba(0, 0, 0, 0.55);
