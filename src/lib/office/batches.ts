@@ -86,7 +86,7 @@ export const missingTracks = (doc: OfficeDocument, subject: string, role: Progra
 // ── which curriculum it follows ──
 
 /** the set a batch names outright, as opposed to falling back on the default */
-export const namesBatch = (set: RequirementSet, batch: number) => !!set.batches?.includes(batch);
+const namesBatch = (set: RequirementSet, batch: number) => !!set.batches?.includes(batch);
 
 /** nobody chose this batch's curriculum: it dropped to the default, though the
  *  batch before it follows a named one. usually an oversight, not a decision */

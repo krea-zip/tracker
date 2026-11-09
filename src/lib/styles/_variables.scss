@@ -15,6 +15,12 @@
 	// ── Text ──
 	--text-body: 1.4rem; // the one body size in the side columns, only headings differ
 	--panel-gutter: 1.6rem;
+	--card-gap: 1rem; // around and between cards, the same on every side
+	--card-pad: 1rem; // inside a card, the same on every side
+	--panel-radius: 4px;
+	--panel-header-height: 5.6rem;
+	--text-heading: 1.8rem;
+	--text-small: 1.2rem;
 	--section-space: 1.6rem;
 	--color-text: #623a52;
 	--color-text-muted: #76626c; // ≥4.5:1 on every light surface, so small muted text stays legible
@@ -49,8 +55,6 @@
 	--color-bg-header-start: #fff4f2;
 	--color-bg-header-end: #f0d4cc;
 	// the board's header/background, a cool grey with a faint blue cast
-	--color-bg-board-start: #ebedf0;
-	--color-bg-board-end: #d3d6da;
 	--color-board-text: #6f757f;
 	// the board's toolbar, a cool brushed-steel strip carrying glossy
 	// old-iPhone segmented keys: light pink, dark pink when selected
@@ -61,10 +65,7 @@
 	--bar-text-muted: #586173; // ≥4.5:1 on the strip
 	--bar-hi: rgba(255, 255, 255, 0.75); // the lit top edge on every face
 	--bar-key: #f4dbe5;
-	--bar-key-edge: #b88a9f;
-	--bar-key-text: #7a3d5c;
 	--bar-key-on: #a84a73;
-	--bar-key-on-edge: #7a3253;
 	--bar-key-on-text: #ffffff;
 	--bar-well: rgba(40, 56, 84, 0.07);
 	// the board field behind the grid, a very pale grey with a faint blue cast
@@ -78,7 +79,6 @@
 	--color-hover: rgba(150, 106, 120, 0.06);
 	--color-hover-medium: rgba(150, 106, 120, 0.08);
 	--color-active: rgba(150, 106, 120, 0.12);
-	--color-active-strong: rgba(150, 106, 120, 0.15);
 	--color-subtle: rgba(150, 106, 120, 0.1);
 
 	// ── Controls ──
@@ -142,7 +142,7 @@
 	--emboss: 0 1px 0 rgba(255, 255, 255, 0.75);
 
 	// ─────────────────────────────────────────
-	// kcal-specific tokens
+	// tracker-specific tokens
 	// ─────────────────────────────────────────
 
 	// ── Course colours ──
@@ -181,7 +181,6 @@
 	--accent-hue: 343; // the plum accent's own hue, before anything's chosen
 	--now-l: 0.56;
 	--now-c: 0.1;
-	--color-on-now: var(--color-on-accent);
 
 	// the same depths in lavender, for anything not tied to one subject
 	// (the reference plan's open slots, the credit rules, admin pages)
@@ -218,7 +217,6 @@
 	--color-drop-ok: #d9f4e8;
 	--color-drop-ok-edge: #9fd4bd;
 	--color-grid-cell: #e1e3e8;
-	--color-grid-cell-problem: #d3b7b7;
 	--color-drop-hint: rgba(150, 106, 120, 0.22);
 
 	// ── Backdrop ──
@@ -249,8 +247,6 @@
 	--color-bg-sidebar-end: #221a1e;
 	--color-bg-header-start: #34272c;
 	--color-bg-header-end: #281e23;
-	--color-bg-board-start: #2b2f37;
-	--color-bg-board-end: #23272e;
 	--color-board-text: #8b95a6;
 	--bar-top: #343a45;
 	--bar-bottom: #282d35;
@@ -259,10 +255,7 @@
 	--bar-text-muted: #a2abba;
 	--bar-hi: rgba(255, 255, 255, 0.07);
 	--bar-key: #4a323d;
-	--bar-key-edge: #24171d;
-	--bar-key-text: #efcfdc;
 	--bar-key-on: #9c4670;
-	--bar-key-on-edge: #5e2441;
 	--bar-key-on-text: #ffffff;
 	--bar-well: rgba(0, 0, 0, 0.2);
 	--color-bg-board-page: #21242b;
@@ -274,7 +267,6 @@
 	--color-hover: rgba(255, 226, 236, 0.05);
 	--color-hover-medium: rgba(255, 226, 236, 0.08);
 	--color-active: rgba(255, 226, 236, 0.12);
-	--color-active-strong: rgba(255, 226, 236, 0.16);
 	--color-subtle: rgba(255, 226, 236, 0.1);
 
 	--color-control: #a4658a;
@@ -346,7 +338,6 @@
 	--color-drop-ok: #26443d;
 	--color-drop-ok-edge: #4a7d6d;
 	--color-grid-cell: #262a30;
-	--color-grid-cell-problem: #45292e;
 	--color-drop-hint: rgba(230, 190, 205, 0.16);
 
 	--color-backdrop: rgba(0, 0, 0, 0.55);

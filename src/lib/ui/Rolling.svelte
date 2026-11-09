@@ -1,6 +1,6 @@
 <script lang="ts">
 	// a changing label rolls over like a mechanical counter, so the eye sees
-	// it change instead of the text just snapping (kcal's motion language).
+	// it change instead of the text just snapping (tracker's motion language).
 	// old and new share one grid cell so they cross instead of stacking.
 	import { roll } from './transitions';
 

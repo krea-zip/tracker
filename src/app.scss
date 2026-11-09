@@ -34,7 +34,7 @@ button:disabled {
 }
 // the tick box's pixel checkmark drawing itself in, a column of blocks at a
 // time (see the tick mixin), global so every component's tick shares it
-@keyframes kcal-tick-draw {
+@keyframes tracker-tick-draw {
 	from {
 		clip-path: inset(0 100% 0 0);
 	}
@@ -103,9 +103,18 @@ button:disabled {
 
 // a new year's heading and cells dropping into place (the drop-in mixin);
 // global because both components animate one row
-@keyframes kcal-drop-in {
+@keyframes tracker-drop-in {
 	from {
 		opacity: 0;
 		transform: translateY(-10px) scale(0.97);
+	}
+}
+
+:root {
+	--site-bar-height: calc(2.6rem + env(safe-area-inset-top));
+}
+@media (max-width: 767px) {
+	:root {
+		--site-bar-height: calc(4.4rem + env(safe-area-inset-top));
 	}
 }

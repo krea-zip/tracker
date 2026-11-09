@@ -1,5 +1,5 @@
-const STORAGE_KEY = 'kcal-plan';
-const BACKUP_KEY = 'kcal-plan-backup';
+const STORAGE_KEY = 'tracker-plan';
+const BACKUP_KEY = 'tracker-plan-backup';
 
 /** Keep the existing keys so upgrades retain every local plan. */
 export function restoreBoard(storage: Pick<Storage, 'getItem'>, apply: (value: Record<string, unknown>) => void) {

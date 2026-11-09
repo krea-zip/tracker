@@ -4,6 +4,7 @@
 // stays. Reads only public data, with the publishable key.
 import { writeFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
+import { separateIntroMathCourses } from './curriculum-corrections.mjs';
 
 const url = process.env.PUBLIC_SUPABASE_URL;
 const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -38,6 +39,6 @@ for (let from = 0; ; from += 1000) {
 	if (data.length < 1000) break;
 }
 
-await writeFile(out('curriculum.json'), JSON.stringify(release.snapshot, null, '\t') + '\n');
+await writeFile(out('curriculum.json'), JSON.stringify(separateIntroMathCourses(release.snapshot), null, '\t') + '\n');
 await writeFile(out('course-descriptions.json'), JSON.stringify(descriptions, null, '\t') + '\n');
 console.log(`curriculum: building with release ${release.id}`);

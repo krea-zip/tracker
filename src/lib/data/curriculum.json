@@ -9967,16 +9967,13 @@
 			"faculty": "Soumya Dey",
 			"subject": "mathematics",
 			"subjects": [
-				"computer science",
 				"mathematics"
 			],
 			"codes": [
-				"COMP191",
 				"MATH191"
 			],
 			"codesBySubject": {
-				"mathematics": "MATH191",
-				"computer science": "COMP191"
+				"mathematics": "MATH191"
 			},
 			"credits": 4,
 			"required": true,
@@ -17179,6 +17176,40 @@
 			"lecturers": [
 				"govindapuram-suresh"
 			]
+		},
+		{
+			"code": "COMP191",
+			"title": "Proofs and Ideas: An Introduction to Mathematical Thinking",
+			"faculty": "Soumya Dey",
+			"subject": "computer science",
+			"subjects": [
+				"computer science"
+			],
+			"codes": [
+				"COMP191"
+			],
+			"codesBySubject": {
+				"computer science": "COMP191"
+			},
+			"credits": 4,
+			"required": true,
+			"offered": [
+				3
+			],
+			"eligibleYears": [
+				1,
+				2,
+				3,
+				4
+			],
+			"prereqs": [],
+			"terms": [
+				"25_T3",
+				"24_T3"
+			],
+			"lecturers": [
+				"soumya-dey"
+			]
 		}
 	],
 	"lecturers": [
@@ -19087,6 +19118,10 @@
 			[
 				"BIOS230",
 				"CHEM210"
+			],
+			[
+				"MATH191",
+				"COMP191"
 			]
 		],
 		"covers": [
@@ -38464,5 +38499,5 @@
 			}
 		}
 	],
-	"release": "0715de862c2b"
+	"release": "a9ee74e45f3e"
 }

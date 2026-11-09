@@ -38,7 +38,7 @@ export const MAJOR_SUBJECTS: Subject[] = SUBJECTS.filter((s) => s.majorable);
  *  foundation core, nor the open minor (offered separately, minor slot only) */
 export const PROGRAMME_SUBJECTS: Subject[] = SUBJECTS.filter((s) => s.id !== 'core' && s.id !== 'open');
 export const OPEN_MINOR: Subject = SUBJECTS.find((s) => s.id === 'open')!;
-export const OPEN_MINOR_CREDITS = 24; // a minor-sized allowance of free courses
+const OPEN_MINOR_CREDITS = 24; // a minor-sized allowance of free courses
 
 const batchProfiles = snapshot.batchProfiles ?? [];
 /** can this batch take the subject in this role (see subjectOffered) */
@@ -99,7 +99,7 @@ const toCourse = ({ terms: _terms, lecturers: _lecturers, ...c }: SnapshotCourse
 });
 
 /** every course, retired ones included, for importers that meet old codes */
-export const ALL_COURSES: Course[] = snapshot.courses.map(toCourse);
+const ALL_COURSES: Course[] = snapshot.courses.map(toCourse);
 
 /** the live catalogue, everything the planner can show and place */
 export const COURSES: Course[] = ALL_COURSES.filter((c) => !c.retired);
@@ -199,7 +199,12 @@ export const reachableIn = (code: string, fourYear: boolean): boolean => {
 // discrete-maths core taught by three departments)…
 for (const group of snapshot.equivalences.substitutes) {
 	const present = group.filter((code) => index.has(code));
-	for (const code of present) index.get(code)!.substitutes = present.filter((other) => other !== code);
+	for (const code of present) {
+		const course = index.get(code)!;
+		// A course may appear in several explicit substitution groups. Keep
+		// each direct link without making the groups transitively equivalent.
+		course.substitutes = [...new Set([...(course.substitutes ?? []), ...present.filter((other) => other !== code)])];
+	}
 }
 // …and one-way: the maths course clears the applied one, not the reverse.
 export const MATHS_COVERS = snapshot.equivalences.covers;

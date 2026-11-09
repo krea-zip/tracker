@@ -44,7 +44,7 @@ import { choicePools } from './choices';
 import { claimCredits, programmeStats } from './credits';
 import { planFill } from './fill';
 import { PlanHistory } from './history.svelte';
-import { ofSubject, setsFor, typeIn } from './programmeSets';
+import { meetsRequired, ofSubject, setsFor, typeIn } from './programmeSets';
 import { cleanBreaks, cleanGrades, cleanNow, cleanPlacements, cleanZoomPos } from './saveFormat';
 import {
 	BREAK_KINDS,
@@ -75,9 +75,7 @@ import {
 
 // bump only when the saved shape changes in a way applySave can't read
 const SAVE_VERSION = 1;
-// a trimester's foot marks the running pace only past one ordinary course
-// either way
-const PACE_SLACK = 4;
+
 export class Plan {
 	storageError = $state('');
 	// ── raw state ──
@@ -430,7 +428,9 @@ export class Plan {
 	// or, on a 3-year degree, take year 4 off, never below the degree's own
 	// length.
 	minYears = $derived(this.miniature ? 2 : this.fourYear ? 4 : 3);
-	years = $derived(Array.from({ length: this.miniature ? 2 : Math.max(this.yearCount, this.minYears) }, (_, i) => i + 1));
+	years = $derived(
+		Array.from({ length: this.miniature ? 2 : Math.max(this.yearCount, this.minYears) }, (_, i) => i + 1)
+	);
 	canRemoveYear = $derived(this.years.length > this.minYears);
 	/** an n-year degree gets n + 2 years: the grid never runs past that */
 	maxYears = $derived(this.miniature ? 2 : this.minYears + 2);
@@ -617,7 +617,7 @@ export class Plan {
 	whatIfHue(code: string): number | undefined {
 		const c = byCode(code);
 		for (const s of this.whatIfSets)
-			if (c.codes.some((x) => s.required.has(x) || s.pick.has(x) || s.elective.has(x)) || ofSubject(c, s.subject))
+			if (meetsRequired(c, s) || c.codes.some((x) => s.elective.has(x)) || ofSubject(c, s.subject))
 				return s.subject === 'open' ? undefined : this.#whatIfHues.get(s.subject);
 		return undefined;
 	}
@@ -743,8 +743,7 @@ export class Plan {
 		if (claimed?.length && this.programmes[claimed[0]]?.subject !== 'open') return claimed[0];
 		for (let i = 0; i < this.programmeSets.length; i++) {
 			const s = this.programmeSets[i];
-			if (c.codes.some((x) => s.required.has(x) || s.pick.has(x) || s.elective.has(x)) || ofSubject(c, s.subject))
-				return i;
+			if (meetsRequired(c, s) || c.codes.some((x) => s.elective.has(x)) || ofSubject(c, s.subject)) return i;
 		}
 		return -1;
 	}
@@ -994,49 +993,6 @@ export class Plan {
 		return { credits, status: 'ok', note: '' };
 	}
 
-	/** the running credit balance at the end of each trimester, against an
-	 *  even spread of the credit target over the years on the grid: + ahead,
-	 *  − behind. the deficit/surplus column students kept by hand in the
-	 *  ministry of learning's spreadsheet. spread over the degree's own years,
-	 *  or further once a later year holds courses (a 3-year degree shows a
-	 *  spare fourth). year 1 is the foundation core, so the pace starts at
-	 *  year 2; a break or suspension expects nothing, an away term counts the
-	 *  credits it brings back. */
-	pace = $derived.by(() => {
-		const out: Partial<Record<SlotKey, number>> = {};
-		const lastYear = Math.max(
-			this.minYears,
-			...this.placed.map((p) => p.year),
-			...this.years.filter((y) => TRIMS.some((t) => this.breaks[slotKey(y, t)]))
-		);
-		const slots = this.years
-			.filter((y) => y !== 1 && y <= lastYear)
-			.flatMap((year) => TRIMS.map((trim) => ({ year, trim, key: slotKey(year, trim) })));
-		const expecting = slots.filter(({ key }) => !this.breaks[key] || this.breaks[key].kind === 'away');
-		if (!expecting.length) return out;
-		const yearOne = TRIMS.reduce((n, t) => n + this.slotCredits(1, t), 0);
-		const each = Math.max(0, this.creditTarget - yearOne) / expecting.length;
-		let balance = 0;
-		for (const { year, trim, key } of slots) {
-			const b = this.breaks[key];
-			if (b && b.kind !== 'away') continue;
-			balance += (b ? (b.credits ?? 0) : this.slotCredits(year, trim)) - each;
-			out[key] = balance;
-		}
-		return out;
-	});
-
-	/** the pace balance worth showing on a trimester's foot, whole credits;
-	 *  null while it's within a course of even (rounding and 2-credit
-	 *  courses shouldn't make a normal plan look off), and past "now": a
-	 *  future term is still short until its electives are picked, and the
-	 *  total and hints already say so, the pace is about what's been taken */
-	slotPace(year: number, trim: TrimNum): number | null {
-		if (slotOrder(year, trim) > slotOrder(this.here.year, this.here.trim)) return null;
-		const b = Math.round(this.pace[slotKey(year, trim)] ?? 0);
-		return Math.abs(b) >= PACE_SLACK ? b : null;
-	}
-
 	/** trimester GPA for a slot, credit-weighted over its letter-graded,
 	 *  non-audit courses; null when nothing there carries a grade */
 	slotTgpa(year: number, trim: TrimNum): number | null {
@@ -1277,9 +1233,6 @@ export class Plan {
 
 	/** the elective room the path leaves, as placeholder credits per trimester */
 	recommendedElectives: Record<SlotKey, number> = $derived.by(() => recommendedElectives(this));
-
-	/** how many elective placeholders the path carries */
-	recommendedElectiveCount = $derived(Object.values(this.recommendedElectives).reduce((sum, n) => sum + n, 0));
 
 	/** The elective credits the degree actually leaves open, quoted rather
 	 *  than the box count, because a remainder that isn't a whole number of

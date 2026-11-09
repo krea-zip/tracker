@@ -3,14 +3,14 @@
 // per board, handed down by context so the bar, the strip and the grid stay
 // in step without threading props through every cell and chip.
 import { createContext } from 'svelte';
-import { planEnd, prereqChain, whatIfVerdict } from './views';
+import { prereqChain, whatIfVerdict } from './views';
 import { slotOrder } from '$lib/planner/calendar';
 import type { Plan } from '$lib/planner/plan.svelte';
 import type { BoardView } from '$lib/planner/structure';
 import type { TrimNum } from '$lib/types';
 import { GridDrag } from '$lib/planner/board/grid/drag.svelte';
 
-const GRADE_HINT_KEY = 'kcal-grade-hint-seen';
+const GRADE_HINT_KEY = 'tracker-grade-hint-seen';
 
 export class BoardState {
 	readonly plan: Plan;
@@ -45,9 +45,6 @@ export class BoardState {
 		!this.spotCodes && this.plan.highlightSlots.length ? new Set(this.plan.highlightSlots) : null
 	);
 	verdict = $derived.by(() => (this.plan.view === 'whatif' && this.plan.whatIf ? whatIfVerdict(this.plan) : null));
-	// a break, a suspension or a retake can push graduation past the degree's
-	// own last year
-	gradYear = $derived.by(() => Math.max(this.plan.minYears, planEnd(this.plan).end?.year ?? this.plan.minYears));
 	hereAt = $derived.by(() => slotOrder(this.plan.here.year, this.plan.here.trim));
 
 	constructor(plan: Plan) {

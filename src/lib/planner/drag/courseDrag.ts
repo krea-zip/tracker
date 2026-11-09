@@ -1,8 +1,8 @@
 // what a dragged course carries. its own type, not text/plain: plain text
 // let go anywhere that doesn't take it (the sidebar, the browser's tab strip
 // or address bar) is opened as an address, which sent browsers to
-// http://chem208/. a type only kcal reads gives nothing else anything to open.
-const TYPE = 'application/x-kcal-course';
+// http://chem208/. a type only tracker reads gives nothing else anything to open.
+const TYPE = 'application/x-tracker-course';
 
 /** start carrying a course (a dragstart) */
 export function carry(e: DragEvent, code: string) {

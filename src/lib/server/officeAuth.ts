@@ -5,13 +5,13 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { Cookies } from '@sveltejs/kit';
 
-const COOKIE = 'kcal_office';
+const COOKIE = 'tracker_office';
 const WEEK = 7 * 24 * 60 * 60;
 export const NAME_MAX = 60;
 
 const sha256 = (text: string) => createHash('sha256').update(text).digest();
 const sign = (password: string, payload: string) =>
-	createHmac('sha256', sha256(`kcal-office-session\0${password}`))
+	createHmac('sha256', sha256(`tracker-office-session\0${password}`))
 		.update(payload)
 		.digest('base64url');
 
@@ -21,13 +21,13 @@ export function passwordMatches(password: string, given: string) {
 }
 
 /** the cookie's value: who, until when, and a signature over both */
-export function sessionValue(password: string, name: string, now = Date.now()) {
+function sessionValue(password: string, name: string, now = Date.now()) {
 	const payload = Buffer.from(JSON.stringify({ name, exp: now + WEEK * 1000 })).toString('base64url');
 	return `${payload}.${sign(password, payload)}`;
 }
 
 /** the name in a session cookie, or null when it's missing, forged or expired */
-export function sessionName(password: string, value: string | undefined, now = Date.now()): string | null {
+function sessionName(password: string, value: string | undefined, now = Date.now()): string | null {
 	const [payload, signature] = value?.split('.') ?? [];
 	if (!payload || !signature) return null;
 	const expected = Buffer.from(sign(password, payload));

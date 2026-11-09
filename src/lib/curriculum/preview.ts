@@ -5,7 +5,7 @@
 import { browser } from '$app/environment';
 import type { CurriculumSnapshot } from './snapshot';
 
-export const PREVIEW_KEY = 'kcal-office-preview';
+export const PREVIEW_KEY = 'tracker-office-preview';
 
 export type PreviewSnapshot = CurriculumSnapshot & { descriptions?: Record<string, string> };
 

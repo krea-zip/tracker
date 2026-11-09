@@ -1,6 +1,6 @@
 <script lang="ts">
 	// the office's own columns on an offering (a room, a timetable slot, a
-	// budget code), beyond what kcal knows about. they're office records:
+	// budget code), beyond what tracker knows about. they're office records:
 	// never published to students. a required one blocks publishing until
 	// every offering has it.
 	import { useOffice } from '$lib/office/workspace.svelte';

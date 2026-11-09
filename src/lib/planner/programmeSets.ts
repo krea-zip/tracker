@@ -83,13 +83,18 @@ export function setsFor(programmes: Programme[], double: boolean, fourYear: bool
 }
 
 /** what a course is to these programmes */
+export const meetsRequired = (course: Course, sets: ProgrammeSets): boolean =>
+	[...sets.required, ...sets.pick].some(
+		(code) => course.codes.includes(code) || satisfiedBy(code).some((sub) => course.codes.includes(sub))
+	);
+
 export function typeIn(code: string, sets: ProgrammeSets[]): CourseType {
 	if (isCore(code)) return 'core'; // the foundation curriculum, everyone's requirement
 	if (isTranscriptOnly(code)) return 'other'; // on the transcript, toward no programme
 	const c = byCode(code);
 	let role: CourseType = 'other';
 	for (const s of sets) {
-		if (c.codes.some((x) => s.required.has(x) || s.pick.has(x))) return 'required';
+		if (meetsRequired(c, s)) return 'required';
 		// in the variant's elective pool, OR simply a course in your
 		// major/minor's own department (a general subject elective),
 		// either way it's not 'other'. 'other' (untinted) is reserved for a

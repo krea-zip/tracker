@@ -51,8 +51,8 @@
 <!-- a phone is for checking credits and the catalogue; say so plainly -->
 {#if !viewport.desktop}
 	<p class="laptop-note">
-		<b>kcal on a phone is for checking your credits and the catalogue.</b> grades, what-if, prerequisites and the other views
-		are on a laptop. plan properly there.
+		<b>tracker on a phone is for checking your credits and the catalogue.</b> grades, what-if, prerequisites and the other
+		views are on a laptop. plan properly there.
 	</p>
 {/if}
 

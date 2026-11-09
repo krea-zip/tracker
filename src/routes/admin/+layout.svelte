@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-	<title>Academic office · kcal</title>
+	<title>Academic office · tracker</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 

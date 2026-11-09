@@ -39,14 +39,14 @@
 	a,
 	.missing {
 		display: grid;
-		grid-template-columns: 9rem 1fr auto;
-		gap: 1.2rem;
+		grid-template-columns: 8rem minmax(0, 1fr) auto;
+		gap: 0.8rem;
 		align-items: baseline;
 		padding: 0.6rem 0.8rem;
-		border-radius: 5px;
+		border-bottom: 1px dotted var(--color-border-card);
 		color: var(--color-text);
 		text-decoration: none;
-		font-size: 1.45rem;
+		font-size: 1.3rem;
 	}
 
 	a:hover {
@@ -64,7 +64,7 @@
 		background: var(--color-bg-light);
 		border: 1px solid var(--color-border-card);
 		border-radius: 3px;
-		font-weight: 700;
+		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		letter-spacing: 0.01em;
 	}
@@ -82,5 +82,21 @@
 	.empty {
 		font-size: 1.4rem;
 		color: var(--color-text-muted);
+	}
+	.title {
+		overflow-wrap: anywhere;
+	}
+	@media (max-width: 400px) {
+		a,
+		.missing {
+			grid-template-columns: minmax(0, 1fr) auto;
+		}
+		.code {
+			grid-column: 1 / -1;
+			font-size: 1.1rem;
+		}
+		.missing .credits {
+			white-space: normal;
+		}
 	}
 </style>

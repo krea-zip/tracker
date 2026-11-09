@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PanelHeader from '$lib/ui/PanelHeader.svelte';
 	import { usePlan } from '$lib/planner/context';
 	import PixelIcon from '$lib/ui/PixelIcon.svelte';
 	import { tick } from 'svelte';
@@ -77,17 +78,13 @@
 	ondragover={(e) => e.preventDefault()}
 	ondrop={drop}
 >
-	<header class="col-header">
-		<div>
-			<h2>catalogue</h2>
-			<p class="mobile-intro">find your next course</p>
-		</div>
+	<PanelHeader title="catalogue" subtitle={mobile ? 'find your next course' : undefined} class="catalogue-header">
 		<!-- how many the search and filters leave, out of the whole catalogue
 		     (kccs foundation courses included) -->
 		<span class="result-count" role="status" aria-label="{plan.catalogue.length} of {COURSES.length} courses"
 			>{plan.catalogue.length}/{COURSES.length}</span
 		>
-	</header>
+	</PanelHeader>
 
 	<!-- search + filters stay put while the cards scroll underneath -->
 	<div class="controls">
@@ -170,18 +167,6 @@
 		}
 		background: linear-gradient(to bottom, var(--color-bg-warm-start), var(--color-bg-warm-end));
 		border-right: 1px solid var(--color-border-warm);
-	}
-
-	.col-header {
-		@include card-header;
-		border-bottom: 1px solid var(--color-border);
-		flex-shrink: 0;
-
-		h2 {
-			font-size: 1.8rem;
-			font-weight: 600;
-			color: var(--color-text);
-		}
 	}
 
 	// search and filters, closed off from the cards below by a hairline that
@@ -323,13 +308,6 @@
 		display: grid; // so the card stretches
 		min-width: 0; // long titles ellipsize instead of widening the column
 	}
-	.col-header {
-		justify-content: space-between;
-		gap: 1rem;
-	}
-	.mobile-intro {
-		display: none;
-	}
 	// a small capsule, so the count reads as a tally rather than loose text
 	.result-count {
 		padding: 0.2rem 0.9rem;
@@ -377,21 +355,6 @@
 	@include mobile {
 		.catalogue {
 			border: 0;
-		}
-		.col-header {
-			padding: 1.6rem 1.8rem 0;
-			background: transparent;
-			border: 0;
-			box-shadow: none;
-		}
-		.col-header h2 {
-			font-size: 2.2rem;
-		}
-		.mobile-intro {
-			display: block;
-			color: var(--color-text-muted);
-			font-size: 1.3rem;
-			margin-top: 0.4rem;
 		}
 		.controls {
 			padding: 1.4rem 1.8rem 0;

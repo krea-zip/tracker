@@ -1,82 +1,8 @@
 @use '$lib/styles/mixins' as *;
 
 .office-shell {
-	// krea's weave: royal blue, navy under it, sky over it
-	--color-text: #1d3f66;
-	--color-text-muted: #546e87;
-	--color-accent: #1f5fa6;
-	--color-on-accent: #f6fbff;
-	--color-text-page: var(--color-text);
-	--color-accent-page: var(--color-accent);
-
-	--color-border: #6a8fb3;
-	--color-border-light: var(--color-border);
-	--color-border-card: #bccfe0;
-	--color-border-divider: #e0ebf4;
-	--color-border-warm: var(--color-border);
-
-	--color-bg: #e9f1f9;
-	--color-bg-light: #f8fbff;
-	--color-bg-sidebar: #f3f8fd;
-	--color-bg-sidebar-end: #e7f0f8;
-	--color-bg-header-start: #f2f8fe;
-	--color-bg-header-end: #c5dbf0;
-	--color-bg-board-page: #e9eff6;
-	--color-bg-card-start: #ffffff;
-	--color-bg-card-end: #f6faff;
-	--color-bg-warm-start: #e9f2fa;
-	--color-bg-warm-end: #d9e7f3;
-
-	--bar-top: #eef3f9;
-	--bar-bottom: #d2deea;
-	--bar-edge: #a6b9cc;
-	--bar-text: #2b4460;
-	--bar-text-muted: #4c6680;
-	--bar-key: #d9e8f6;
-	--bar-key-edge: #86a9c9;
-	--bar-key-text: #1f4f80;
-	--bar-key-on: #2a6cb3;
-	--bar-key-on-edge: #174b83;
-	--bar-key-on-text: #ffffff;
-	--bar-well: rgba(20, 60, 110, 0.08);
-
-	--color-hover: rgba(40, 100, 170, 0.06);
-	--color-hover-medium: rgba(40, 100, 170, 0.08);
-	--color-active: rgba(40, 100, 170, 0.12);
-	--color-active-strong: rgba(40, 100, 170, 0.15);
-	--color-subtle: rgba(40, 100, 170, 0.1);
-
-	--color-control: var(--color-accent);
-	--color-control-deep: #123e73;
-	--color-danger: #a83a36;
-	--color-danger-deep: #7f2a27;
-
-	--shadow-inset:
-		inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 6px 9px -6px rgba(255, 255, 255, 0.75),
-		inset 0 -5px 8px -7px rgba(60, 100, 150, 0.22);
-	--shadow-inset-hover:
-		inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 7px 10px -6px rgba(255, 255, 255, 0.8),
-		inset 0 -6px 9px -7px rgba(60, 100, 150, 0.22);
-	--shadow-well: inset 0 2px 4px rgba(60, 90, 130, 0.2), inset 0 -1px 0 rgba(255, 255, 255, 0.5);
-	--gloss-face: linear-gradient(
-		to bottom,
-		rgba(255, 255, 255, 0.72) 0%,
-		rgba(255, 255, 255, 0.3) 48%,
-		rgba(60, 100, 150, 0.05) 52%,
-		rgba(60, 100, 150, 0.16) 100%
-	);
-
-	--color-hint-info: #dfeaf4;
-	--color-hint-info-deep: #a2b9cf;
-	--color-hint-warn: #fbe3df;
-	--color-hint-warn-deep: #d39a90;
-	--color-grid-cell: #dfe7ef;
-	--color-course-required: oklch(var(--tone-required-l) var(--tone-required-c) 250);
-	--color-course-required-deep: oklch(var(--tone-required-deep-l) var(--tone-required-deep-c) 250);
-	--color-course-elective: oklch(var(--tone-elective-l) var(--tone-elective-c) 250);
-	--color-course-elective-deep: oklch(var(--tone-elective-deep-l) var(--tone-elective-deep-c) 250);
-
-	--office-sky: #4fb3e6;
+	// Inherit the same light/dark theme as the student pages.
+	--office-sky: var(--color-accent);
 	--office-line: var(--color-border-card);
 	--office-rule: 1px dotted color-mix(in srgb, var(--color-text-muted) 55%, transparent);
 	// the two strips at the top, so what sits under them knows where to start
@@ -85,7 +11,7 @@
 
 	display: flex;
 	flex-direction: column;
-	height: 100dvh;
+	height: calc(100dvh - var(--site-bar-height));
 	font-size: var(--text-body);
 	line-height: 1.5;
 	color: var(--color-text);

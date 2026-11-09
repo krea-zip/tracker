@@ -10,7 +10,7 @@
 	// and always leaves the board room. Double-clicking an edge puts it back.
 	import { onMount } from 'svelte';
 
-	const PANEL_KEY = 'kcal-panel-widths';
+	const PANEL_KEY = 'tracker-panel-widths';
 	const PANELS: { id: Panel; label: string; min: number; max: number }[] = [
 		{ id: 'rail', label: 'sidebar', min: 20, max: 40 },
 		{ id: 'catalogue', label: 'catalogue', min: 22, max: 52 }

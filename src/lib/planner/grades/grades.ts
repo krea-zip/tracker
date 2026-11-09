@@ -24,8 +24,8 @@ export const GRADE_POINTS = Object.fromEntries(GRADE_SCALE.map((g) => [g.letter,
 	GradeLetter,
 	number
 >;
-export const GRADE_LETTERS: GradeLetter[] = GRADE_SCALE.map((g) => g.letter);
-export const MAX_GRADE_POINT = GRADE_SCALE[0].points; // 10 (A+)
+const GRADE_LETTERS: GradeLetter[] = GRADE_SCALE.map((g) => g.letter);
+const MAX_GRADE_POINT = GRADE_SCALE[0].points; // 10 (A+)
 
 export const isGradeLetter = (v: unknown): v is GradeLetter =>
 	typeof v === 'string' && (GRADE_LETTERS as string[]).includes(v);
@@ -65,7 +65,7 @@ export function weightedGpa(items: { points: number; credits: number }[]): numbe
 /** the easiest letter that still clears a required average, for "you need at
  *  least a ___". The scale is high→low, so the smallest sufficient grade is the
  *  last one scanning from the bottom up. */
-export function letterForAtLeast(points: number): GradeInfo | undefined {
+function letterForAtLeast(points: number): GradeInfo | undefined {
 	return [...GRADE_SCALE].reverse().find((g) => g.points >= points - 1e-9);
 }
 

@@ -59,7 +59,7 @@
 	}
 
 	// an old desktop app's readout: springs up under the cursor and squeezes
-	// when pressed, like kcal's other keys
+	// when pressed, like tracker's other keys
 	.gpa {
 		display: inline-grid;
 		place-items: center;

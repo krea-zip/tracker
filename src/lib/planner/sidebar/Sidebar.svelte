@@ -1,16 +1,11 @@
 <script lang="ts">
 	import { usePlan } from '$lib/planner/context';
-	import PixelIcon from '$lib/ui/PixelIcon.svelte';
 	import { STUDENT_BATCHES } from '$lib/curriculum/data';
-	import { viewport } from '$lib/planner/viewport.svelte';
 	import { optionLabel, type PickRole } from '$lib/planner/picks';
-	import Settings from '$lib/planner/shell/Settings.svelte';
 	import FourYearToggle from './FourYearToggle.svelte';
 	import { softUpdate } from '$lib/ui/transitions';
 
 	const plan = usePlan();
-
-	let showSettings = $state(false);
 
 	// changing the programme re-lays-out a plan the student has never edited,
 	// and leaves an edited one alone, see Plan.programmeChanged. a subject an
@@ -29,28 +24,6 @@
 		</select>
 	</label>
 {/snippet}
-
-<header class="col-header">
-	<h2>kcal</h2>
-	{#if viewport.desktop}
-		<button class="gear help" title="what's what" aria-label="what's what" onclick={() => (plan.guiding = true)}
-			><PixelIcon name="help" size="1.6rem" snap /></button
-		>
-	{/if}
-	<button
-		class="gear"
-		data-tour="settings"
-		aria-label="settings"
-		title="settings"
-		onclick={() => (showSettings = true)}
-	>
-		<PixelIcon name="gear" size="1.6rem" snap />
-	</button>
-</header>
-
-{#if showSettings}
-	<Settings onclose={() => (showSettings = false)} />
-{/if}
 
 <div class="pickers" data-tour="programme">
 	<!-- the 4-year switch rides on the batch line -->
@@ -94,52 +67,12 @@
 <style lang="scss">
 	@use '$lib/styles/mixins' as *;
 
-	.col-header {
-		@include card-header;
-		justify-content: flex-end;
-		gap: 0.2rem;
-		border-bottom: 1px solid var(--color-border);
-
-		h2 {
-			margin-right: auto;
-			font-size: 1.8rem;
-			font-weight: 600;
-			color: var(--color-text);
-		}
-	}
-
-	// the app's one settings entry point, in the corner it's always in
-	.gear {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-		width: 2.8rem;
-		height: 2.8rem;
-		padding: 0;
-		color: var(--color-text-muted);
-		background: none;
-		border: none;
-		cursor: pointer;
-		transition: color 0.15s ease;
-
-		&:hover {
-			color: var(--color-text);
-		}
-
-		&.help {
-			font: inherit;
-			font-size: 1.6rem;
-			font-weight: 700;
-		}
-	}
-
 	// the planner sizes the sidebar to fit these (see its layout)
 	.pickers {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		padding: 1.6rem 1.6rem;
+		padding: var(--panel-gutter);
 		border-bottom: 1px solid var(--color-border-light);
 	}
 

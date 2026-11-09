@@ -86,7 +86,7 @@ const LESSON_LIST = [
 		id: 'display',
 		title: 'make the grid yours',
 		label: 'display',
-		intro: 'the display menu on the grid’s bar changes what the boxes say, and explains what their colours mean.',
+		intro: 'the grid’s bar changes what the boxes say, and its display menu explains what their colours mean.',
 		tasks: [
 			{
 				id: 'display-titles',
@@ -180,7 +180,7 @@ const LESSON_LIST = [
 		id: 'hints',
 		title: 'a little help along the way',
 		label: 'hints',
-		intro: 'kcal checks your plan against the rules as you go. ▲ problems come first, then ■ warnings.',
+		intro: 'tracker checks your plan against the rules as you go. ▲ problems come first, then ■ warnings.',
 		tasks: [
 			{
 				id: 'hints-open',

@@ -160,7 +160,7 @@
 
 	function receive(event: MessageEvent) {
 		if (event.source !== parent || event.origin !== location.origin) return;
-		if (event.data?.type !== 'kcal-playground-lesson') return;
+		if (event.data?.type !== 'tracker-playground-lesson') return;
 		const { lesson: next, theme, rem, active: on, point, history } = event.data;
 		if (history === 'undo') plan.undo();
 		if (history === 'redo') plan.redo();
@@ -174,12 +174,12 @@
 	}
 
 	$effect(() => {
-		parent.postMessage({ type: 'kcal-playground-progress', done: [...done] }, location.origin);
+		parent.postMessage({ type: 'tracker-playground-progress', done: [...done] }, location.origin);
 	});
 
 	onMount(() => {
 		plan.startHistory();
-		parent.postMessage({ type: 'kcal-playground-ready' }, location.origin);
+		parent.postMessage({ type: 'tracker-playground-ready' }, location.origin);
 	});
 </script>
 
@@ -342,7 +342,9 @@
 
 	// that slide has the menu opened out in the panel beside the grid
 	[data-lesson='display'] .board :global(.colour-key),
-	[data-lesson='display'] .board :global(.board-bar > span:nth-of-type(2)) {
+	[data-lesson='display'] .board :global(.board-bar > span:nth-of-type(2)),
+	[data-lesson='display'] .board :global(.board-bar > span:nth-of-type(3)),
+	[data-lesson='display'] .board :global(.board-bar [aria-label='course labels']) {
 		display: none;
 	}
 

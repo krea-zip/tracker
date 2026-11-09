@@ -8,7 +8,7 @@ const YEARS = ['year 1', 'year 2', 'year 3', 'year 4'];
 export function downloadBackup(doc: OfficeDocument) {
 	const title = (code: string) => doc.curriculum.courses.find((c) => c.code === code)?.title ?? '';
 	const term = (id: string) => doc.terms.find((t) => t.id === id)?.label ?? id;
-	return exportWorkbook(`kcal-backup-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+	return exportWorkbook(`tracker-backup-${new Date().toISOString().slice(0, 10)}.xlsx`, [
 		{
 			name: 'Courses',
 			rows: [

@@ -1,5 +1,5 @@
 // each discipline's student representatives for the year, from the Ministry
-// of Learning's discipline representative list. names only: kcal is a public
+// of Learning's discipline representative list. names only: tracker is a public
 // site, so the reps' phone numbers stay on the registration sheet
 export const REPS_YEAR = '2026-27';
 

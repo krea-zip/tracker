@@ -7,6 +7,7 @@
 	// iPad held upright slides the sidebar in too; phones show one panel at a
 	// time behind tabs.
 	import type { Snippet } from 'svelte';
+	import { useSiteActions } from '$lib/site/navigation';
 	import { onMount, tick } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { Plan } from '$lib/planner/plan.svelte';
@@ -41,10 +42,22 @@
 	let { children }: { children: Snippet } = $props();
 
 	const plan = providePlan(new Plan());
+	const siteActions = useSiteActions();
+	onMount(() => {
+		siteActions.settings = () => (showSettings = true);
+		siteActions.help = () => {
+			if (viewport.desktop) plan.guiding = true;
+			else location.href = '/?welcome';
+		};
+		return () => {
+			siteActions.settings = undefined;
+			siteActions.help = undefined;
+		};
+	});
 	const onKeys = plannerKeys(plan);
 
 	let ready = $state(false);
-	let accountSettings = $state(false);
+	let showSettings = $state(false);
 	let incoming = $state<Incoming | null>(null);
 	let mobileView = $state<'catalogue' | 'board' | 'rail'>('catalogue');
 	let widths = $state<PanelWidths>({});
@@ -57,7 +70,7 @@
 		softUpdate(() => {
 			detailsPinned = !detailsPinned;
 			try {
-				localStorage.setItem('kcal-details-pinned', String(detailsPinned));
+				localStorage.setItem('tracker-details-pinned', String(detailsPinned));
 			} catch {
 				// the preference still works for this visit
 			}
@@ -88,12 +101,12 @@
 
 	onMount(() => {
 		try {
-			detailsPinned = localStorage.getItem('kcal-details-pinned') === 'true';
+			detailsPinned = localStorage.getItem('tracker-details-pinned') === 'true';
 		} catch {
 			// storage is optional
 		}
 		incoming = takeIncoming();
-		accountSettings = !!incoming.account && !incoming.shareId && !incoming.sharedPlan;
+		showSettings = !!incoming.account && !incoming.shareId && !incoming.sharedPlan;
 		if (incoming.account === 'error')
 			account.error = 'Google sign-in was cancelled or could not finish. Your draft is unchanged. Please try again.';
 		if (incoming.course && hasCode(incoming.course)) plan.revealCourse(incoming.course);
@@ -143,14 +156,14 @@
 </script>
 
 <svelte:head>
-	<title>kcal</title>
+	<title>tracker</title>
 </svelte:head>
 
 <svelte:window onkeydown={onWindowKeys} onpointerdowncapture={notePress} onclick={closeIfNothingPicked} />
 
 {#if ready}
 	<SharedPlanPrompt encoded={incoming?.sharedPlan ?? null} shareId={incoming?.shareId ?? null} />
-	{#if accountSettings}<Settings onclose={() => (accountSettings = false)} />{/if}
+	{#if showSettings}<Settings onclose={() => (showSettings = false)} />{/if}
 	<!-- a shared plan or a linked course opens straight over the planner instead -->
 	<Onboarding
 		skip={!!(incoming?.course || incoming?.sharedPlan || incoming?.shareId || incoming?.account)}
@@ -256,6 +269,8 @@
 		height: 100%;
 	}
 
+	$top-strip-h: var(--site-bar-height);
+
 	// The app is locked to the viewport and each column scrolls on its own, so
 	// nothing ever runs past the page. Side panels follow the text size;
 	// a dragged edge overrides their default widths.
@@ -274,7 +289,7 @@
 		display: grid;
 		grid-template-areas: 'rail catalogue board';
 		grid-template-columns: var(--rail-w) var(--catalogue-w) var(--board-w);
-		height: 100dvh;
+		height: calc(100dvh - #{$top-strip-h});
 		background: var(--color-bg);
 
 		// mid-drag, the cursor holds wherever it wanders and no text gets
@@ -295,6 +310,7 @@
 
 	.rail {
 		--rail-radius: 4px;
+		--panel-gutter: var(--card-gap);
 		grid-area: rail;
 		display: flex;
 		flex-direction: column;
@@ -374,7 +390,7 @@
 
 	.previewing {
 		position: fixed;
-		top: 0;
+		top: $top-strip-h;
 		left: 50%;
 		z-index: 50;
 		translate: -50% 0;
@@ -401,7 +417,7 @@
 	// a panel that slides in over the board
 	@mixin slide-in($from) {
 		position: fixed;
-		top: 0;
+		top: $top-strip-h;
 		bottom: 0;
 		#{$from}: 0;
 		z-index: 30;
@@ -489,8 +505,6 @@
 			grid-template-areas: 'main' 'tabs';
 			grid-template-columns: minmax(0, 1fr);
 			grid-template-rows: minmax(0, 1fr) auto;
-			// the header that held the notch's inset is gone, so the panels do
-			padding-top: env(safe-area-inset-top);
 			overflow: hidden;
 		}
 

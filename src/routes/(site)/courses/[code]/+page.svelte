@@ -1,237 +1,213 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import Panel from '$lib/ui/Panel.svelte';
+	import PanelHeader from '$lib/ui/PanelHeader.svelte';
+	import Toolbar from '$lib/ui/Toolbar.svelte';
+	import Button from '$lib/ui/Button.svelte';
+	import Disclosure from '$lib/ui/Disclosure.svelte';
 	import CourseList from '$lib/site/CourseList.svelte';
-
-	let { data } = $props();
-
-	const trimesters = (ts: number[]) => (ts.length ? ts.map((t) => `T${t}`).join(', ') : 'not scheduled yet');
+	import type { PageData } from './$types';
+	let { data }: { data: PageData } = $props();
+	const trimesters = (ts: number[]) => (ts.length ? ts.map((t) => `T${t}`).join(', ') : 'not recorded');
 	const years = (ys: number[]) => (ys.length ? `year ${ys.join(', ')}` : 'any year');
-	const list = (xs: string[]) => xs.join(', ');
-	const summary = $derived(
-		[`${data.credits}-credit course`, data.offered.length ? `runs in ${trimesters(data.offered)}` : '', data.subject]
-			.filter(Boolean)
-			.join(' · ')
-	);
 </script>
 
 <svelte:head>
-	<title>{data.code} {data.title} · kcal</title>
-	<meta name="description" content="{data.code} {data.title}: {summary}." />
+	<title>{data.code} {data.title} · tracker</title>
+	<meta
+		name="description"
+		content="{data.code} {data.title}: credits, prerequisites, course description and teaching history at Krea."
+	/>
 	<link rel="canonical" href="{page.url.origin}/courses/{data.code}" />
 </svelte:head>
 
-<article>
-	<header>
-		<p class="codes">
-			{#each data.listings as l (l.code)}<a href={l.href} title={l.subject}>{l.code}</a>{/each}
-		</p>
-		<h1>{data.title}</h1>
-		<p class="lede">{summary}</p>
-		<a class="plan" href="/?course={data.code}">plan this course →</a>
-	</header>
-
-	<dl class="facts">
-		<div>
-			<dt>credits</dt>
-			<dd>{data.creditsPending ? 'to be confirmed' : data.credits}</dd>
-		</div>
-		<div>
-			<dt>runs in</dt>
-			<dd>{trimesters(data.offered)}</dd>
-		</div>
-		<div>
-			<dt>open to</dt>
-			<dd>{years(data.eligibleYears)}</dd>
-		</div>
-		{#if data.terms.length}<div>
-				<dt>last offered</dt>
-				<dd>{data.terms[0]}</dd>
-			</div>{/if}
-	</dl>
-
-	{#if data.description}
-		<section>
-			<h2>about</h2>
-			<p class="prose">{data.description}</p>
-		</section>
-	{/if}
-
-	<section>
-		<h2>before this</h2>
-		<CourseList courses={data.prerequisites} empty="No prerequisites." />
-		{#if data.equivalents.length}
-			<p class="note">Interchangeable with these (take one, not both):</p>
-			<CourseList courses={data.equivalents} />
-		{/if}
-	</section>
-
-	{#if data.unlocks.length}
-		<section>
-			<h2>leads on to</h2>
-			<CourseList courses={data.unlocks} />
-		</section>
-	{/if}
-
-	{#if data.programmes.length}
-		<section>
-			<h2>in these programmes</h2>
-			<p class="note">For the {data.batches}.</p>
-			<ul class="programmes">
-				{#each data.programmes as p (p.slug)}
-					<li>
-						<a href="/programmes/{p.slug}">{p.subject}</a>
-						{#if p.required.length}<span><b>required</b>: {list(p.required)}</span>{/if}
-						{#if p.choice.length}<span><b>one of a choice</b>: {list(p.choice)}</span>{/if}
-						{#if p.elective.length}<span><b>elective</b>: {list(p.elective)}</span>{/if}
-					</li>
-				{/each}
-			</ul>
-		</section>
-	{/if}
-
-	{#if data.lecturers.length}
-		<section>
-			<h2>recently taught by</h2>
-			<ul class="people">
-				{#each data.lecturers as l (l.id)}
-					<li>
-						<a href="/lecturers/{l.id}">{l.name}</a>{#if l.title}<span>{l.title}</span>{/if}
-					</li>
-				{/each}
-			</ul>
-			{#if data.terms.length > 1}<p class="note">Offered in {data.terms.join(', ')}.</p>{/if}
-		</section>
-	{/if}
-</article>
+<div class="detail-page">
+	<Panel>
+		<Toolbar tone="warm"
+			><a class="back" href="/courses">← courses</a>
+			<div class="codes">
+				{#each data.listings as l (l.code)}<a href={l.href} title={l.subject}>{l.code}</a>{/each}
+			</div></Toolbar
+		>
+		<PanelHeader title={data.title} subtitle={data.subject} level={1}>
+			<Button variant="primary" href="/?course={data.code}">plan this course →</Button>
+		</PanelHeader>
+		<Toolbar>
+			<dl class="facts">
+				<div>
+					<dt>credits</dt>
+					<dd>{data.creditsPending ? 'to be confirmed' : data.credits}</dd>
+				</div>
+				<div>
+					<dt>recorded trimesters</dt>
+					<dd>{trimesters(data.offered)}</dd>
+				</div>
+				<div>
+					<dt>open to</dt>
+					<dd>{years(data.eligibleYears)}</dd>
+				</div>
+				{#if data.terms.length}<div>
+						<dt>last offered</dt>
+						<dd>{data.terms[0]}</dd>
+					</div>{/if}
+			</dl>
+		</Toolbar>
+	</Panel>
+	<div class="detail-columns">
+		<Panel>
+			<PanelHeader title="about this course" />
+			{#if data.description}<div class="prose">{data.description}</div>{:else}<p class="note inset">
+					No course description is available yet.
+				</p>{/if}
+			{#if data.programmes.length}
+				<Disclosure title="in these programmes" meta={data.batches} open>
+					<ul class="programme-list">
+						{#each data.programmes as p (p.slug)}
+							<li>
+								<a href="/programmes/{p.slug}">{p.subject}</a>
+								<div>
+									{#if p.required.length}<p><b>required</b> · {p.required.join(', ')}</p>{/if}
+									{#if p.choice.length}<p><b>one of a choice</b> · {p.choice.join(', ')}</p>{/if}
+									{#if p.elective.length}<p><b>elective</b> · {p.elective.join(', ')}</p>{/if}
+								</div>
+							</li>
+						{/each}
+					</ul>
+				</Disclosure>
+			{/if}
+		</Panel>
+		<Panel>
+			<PanelHeader title="planning & teaching" />
+			<Disclosure title="before this" meta={String(data.prerequisites.length)} open>
+				<CourseList courses={data.prerequisites} empty="No prerequisites." />
+				{#if data.equivalents.length}<p class="note">Interchangeable courses (take one, not both):</p>
+					<CourseList courses={data.equivalents} />{/if}
+			</Disclosure>
+			{#if data.unlocks.length}<Disclosure title="leads on to" meta={String(data.unlocks.length)} open
+					><CourseList courses={data.unlocks} /></Disclosure
+				>{/if}
+			<Disclosure title="recently taught by" meta={String(data.lecturers.length)} open>
+				{#if data.lecturers.length}<ul class="people">
+						{#each data.lecturers as l (l.id)}<li>
+								<a href="/lecturers/{l.id}">{l.name}</a>{#if l.title}<span>{l.title}</span>{/if}
+							</li>{/each}
+					</ul>{:else}<p class="note">No teaching records linked yet.</p>{/if}
+				{#if data.terms.length}<p class="note">Recorded in {data.terms.join(', ')}. Instructors may change.</p>{/if}
+			</Disclosure>
+		</Panel>
+	</div>
+</div>
 
 <style lang="scss">
-	header {
-		padding-bottom: 2.4rem;
-		border-bottom: 1px dotted var(--color-border-light);
+	.detail-page {
+		display: grid;
+		gap: var(--section-space);
 	}
-
+	.detail-columns {
+		display: grid;
+		grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+		gap: var(--section-space);
+		align-items: start;
+	}
+	.back {
+		color: var(--color-text-muted);
+		font-size: var(--text-small);
+	}
 	.codes {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.6rem;
-
-		a {
-			padding: 0.2rem 0.8rem;
-			font-size: 1.3rem;
-			font-weight: 700;
-			letter-spacing: 0.02em;
-			color: var(--color-text);
-			text-decoration: none;
-			background: var(--color-course-required);
-			border: 1px solid var(--color-course-required-deep);
-			border-radius: 4px;
-		}
+		gap: 0.5rem;
+		margin-left: auto;
 	}
-
-	h1 {
-		margin-top: 1rem;
-		font-size: 3.4rem;
-		line-height: 1.15;
-		letter-spacing: -0.02em;
-	}
-
-	.lede {
-		margin-top: 0.8rem;
-		font-size: 1.6rem;
-		color: var(--color-text-muted);
-	}
-
-	.plan {
-		display: inline-block;
-		margin-top: 1.6rem;
-		padding: 0.8rem 1.6rem;
-		font-size: 1.4rem;
+	.codes a {
+		padding: 0.15rem 0.5rem;
+		border: 1px solid var(--color-course-required-deep);
+		border-radius: 3px;
+		background: var(--color-course-required);
 		font-weight: 600;
-		color: var(--color-on-accent);
 		text-decoration: none;
-		background-color: var(--color-accent);
-		border: 1px solid var(--color-control-deep);
-		border-radius: 6px;
-		background-image: var(--gloss-face-accent);
 	}
-
+	a {
+		color: var(--color-accent);
+		text-underline-offset: 0.2em;
+	}
 	.facts {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-		gap: 1.2rem;
-		margin: 2.4rem 0;
-
-		div {
-			padding: 1.2rem 1.4rem;
-			background: var(--color-bg-light);
-			border: 1px solid var(--color-border-card);
-			border-radius: 6px;
-		}
-
-		dt {
-			font-size: 1.15rem;
-			font-weight: 700;
-			letter-spacing: 0.06em;
-			text-transform: uppercase;
-			color: var(--color-text-muted);
-		}
-
-		dd {
-			margin-top: 0.4rem;
-			font-size: 1.6rem;
-			font-weight: 700;
-		}
+		width: 100%;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.8rem 2.4rem;
+		padding-block: 0.2rem;
 	}
-
-	section {
-		margin-top: 3.2rem;
+	.facts div {
+		display: flex;
+		align-items: baseline;
+		gap: 0.7rem;
 	}
-
-	h2 {
-		margin-bottom: 1rem;
-		font-size: 1.9rem;
+	dt {
+		color: var(--bar-text-muted);
+		font-size: var(--text-small);
 	}
-
+	dd {
+		font-weight: 600;
+	}
 	.prose {
-		max-width: 68ch;
-		font-size: 1.55rem;
+		padding: var(--panel-gutter);
+		font-size: var(--text-body);
 		line-height: 1.65;
 		white-space: pre-line;
+		border-bottom: 1px dotted var(--color-border-card);
 	}
-
 	.note {
-		margin: 1.2rem 0 0.6rem;
-		font-size: 1.35rem;
+		margin-top: 0.8rem;
 		color: var(--color-text-muted);
+		font-size: var(--text-small);
+		line-height: 1.5;
 	}
-
-	.programmes,
+	.inset {
+		padding: var(--panel-gutter);
+		margin: 0;
+	}
+	.programme-list,
 	.people {
 		list-style: none;
+	}
+	.programme-list li {
 		display: grid;
-		gap: 0.8rem;
-		font-size: 1.45rem;
-
-		li {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 0.2rem 1.2rem;
-			align-items: baseline;
-		}
-
-		a {
-			font-weight: 600;
-			color: var(--color-text);
-			min-width: 18rem;
-		}
-
-		span {
-			color: var(--color-text-muted);
+		grid-template-columns: 10rem minmax(0, 1fr);
+		gap: 1rem;
+		padding: 0.7rem 0;
+		border-bottom: 1px dotted var(--color-border-card);
+	}
+	.programme-list li:last-child {
+		border-bottom: 0;
+	}
+	.programme-list p {
+		color: var(--color-text-muted);
+		font-size: var(--text-small);
+		line-height: 1.5;
+	}
+	.programme-list b {
+		color: var(--color-text);
+		font-weight: 500;
+	}
+	.people li {
+		display: grid;
+		gap: 0.25rem;
+		padding-block: 0.4rem;
+	}
+	.people span {
+		color: var(--color-text-muted);
+		font-size: var(--text-small);
+	}
+	@media (max-width: 850px) {
+		.detail-columns {
+			grid-template-columns: 1fr;
 		}
 	}
-
-	.programmes b {
-		font-weight: 600;
-		color: var(--color-text);
+	@media (max-width: 480px) {
+		.programme-list li {
+			grid-template-columns: 1fr;
+			gap: 0.3rem;
+		}
 	}
 </style>

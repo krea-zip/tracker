@@ -158,8 +158,8 @@
 
 <div class="closing" bind:this={closing}>
 	<p>
-		kcal lays out your degree and checks the rules as you go. it doesn't register you: that's still the drop form on the
-		ERP, and it's a guide, not the university's word. press <b>?</b> to see these labels again.
+		tracker lays out your degree and checks the rules as you go. it doesn't register you: that's still the drop form on
+		the ERP, and it's a guide, not the university's word. press <b>?</b> to see these labels again.
 	</p>
 	<button bind:this={gotIt} onclick={close}>got it</button>
 </div>

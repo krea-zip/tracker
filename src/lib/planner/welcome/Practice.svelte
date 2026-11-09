@@ -31,7 +31,7 @@
 	function sync() {
 		frame?.contentWindow?.postMessage(
 			{
-				type: 'kcal-playground-lesson',
+				type: 'tracker-playground-lesson',
 				lesson,
 				active,
 				point,
@@ -62,16 +62,17 @@
 		if (!history) return;
 		e.preventDefault();
 		e.stopPropagation();
-		frame?.contentWindow?.postMessage({ type: 'kcal-playground-lesson', history }, location.origin);
+		frame?.contentWindow?.postMessage({ type: 'tracker-playground-lesson', history }, location.origin);
 	}
 
 	function receive(event: MessageEvent) {
 		if (event.source !== frame?.contentWindow || event.origin !== location.origin) return;
-		if (event.data?.type === 'kcal-playground-ready') {
+		if (event.data?.type === 'tracker-playground-ready') {
 			ready = true;
 			sync();
 		}
-		if (event.data?.type === 'kcal-playground-progress' && Array.isArray(event.data.done)) onprogress(event.data.done);
+		if (event.data?.type === 'tracker-playground-progress' && Array.isArray(event.data.done))
+			onprogress(event.data.done);
 	}
 </script>
 

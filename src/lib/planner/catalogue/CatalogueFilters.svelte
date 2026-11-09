@@ -40,7 +40,6 @@
 	{/each}
 </div>
 
-
 <style lang="scss">
 	@use '$lib/styles/mixins' as *;
 
@@ -106,6 +105,5 @@
 			min-height: 3.6rem;
 			padding-inline: 1.1rem;
 		}
-
 	}
 </style>

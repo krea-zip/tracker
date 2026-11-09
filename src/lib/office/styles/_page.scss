@@ -25,8 +25,8 @@
 	left: 1rem;
 	z-index: 100;
 	padding: 1rem 2rem;
-	color: #123e73;
-	background: #fff;
+	color: var(--color-text);
+	background: var(--color-bg-light);
 
 	&:focus {
 		top: 1rem;
@@ -323,8 +323,8 @@
 @keyframes office-found {
 	0%,
 	45% {
-		background: color-mix(in srgb, #4fb3e6 28%, transparent);
-		box-shadow: 0 0 0 0.6rem color-mix(in srgb, #4fb3e6 28%, transparent);
+		background: color-mix(in srgb, var(--color-accent) 28%, transparent);
+		box-shadow: 0 0 0 0.6rem color-mix(in srgb, var(--color-accent) 28%, transparent);
 	}
 
 	100% {

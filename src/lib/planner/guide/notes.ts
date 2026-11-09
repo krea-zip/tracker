@@ -4,7 +4,7 @@ export type Side = 'above' | 'below' | 'left' | 'right';
 export type GuideNote = { target: string; side: Side; text: string };
 
 export const GUIDE_NOTES: GuideNote[] = [
-	{ target: '[data-tour="settings"]', side: 'right', text: 'dark mode, saved plans and sharing' },
+	{ target: '[data-tour="settings"]', side: 'below', text: 'dark mode, saved plans and sharing' },
 	{ target: '[data-tour="four-year"]', side: 'below', text: 'toggle if planning a 3-year degree' },
 	{ target: '[data-tour="hints"] h3', side: 'right', text: 'what needs fixing, worst first' },
 	{

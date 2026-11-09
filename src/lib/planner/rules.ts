@@ -1,4 +1,4 @@
-// the university's regulations as kcal reads them (credit loads, the
+// the university's regulations as tracker reads them (credit loads, the
 // foundation core, prerequisite order, year and trimester eligibility,
 // audits, the credit ceiling, grades), turned into the hints the sidebar
 // lists. a plain function of the plan so the rules can be read and tested

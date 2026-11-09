@@ -450,7 +450,7 @@
 		justify-content: space-between;
 		gap: 1rem;
 		width: 100%;
-		padding: 0.9rem 1.6rem;
+		padding: 0.9rem var(--panel-gutter);
 		font: inherit;
 		font-weight: 500;
 		text-align: left;
@@ -566,7 +566,7 @@
 		gap: 0.5rem;
 		width: 100%;
 		margin: 0;
-		padding: 0 1.6rem 1rem 3.2rem;
+		padding: 0 var(--panel-gutter) 1rem calc(var(--panel-gutter) + 1.6rem);
 		list-style: none;
 
 		> li {
@@ -737,7 +737,7 @@
 		justify-content: space-between;
 		align-items: center;
 		width: 100%;
-		padding: 1.2rem 1.6rem;
+		padding: 1.2rem var(--panel-gutter);
 		font: inherit;
 		font-size: 1.2rem;
 		color: var(--color-text-muted);
@@ -756,7 +756,7 @@
 	}
 
 	.all-clear {
-		padding: 1.2rem 1.6rem 1.4rem;
+		padding: 1.2rem var(--panel-gutter) 1.4rem;
 		font-size: var(--text-body);
 		color: var(--color-text-muted);
 	}
@@ -769,7 +769,7 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: 0.2rem 0.8rem;
-		padding: 0 1.6rem 1.4rem;
+		padding: 0 var(--panel-gutter) 1.4rem;
 		font-size: 1.2rem;
 		color: var(--color-text-muted);
 	}

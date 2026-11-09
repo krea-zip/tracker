@@ -87,7 +87,7 @@
 </script>
 
 <Modal
-	title="welcome to kcal"
+	title="welcome to tracker"
 	width={lesson ? '148rem' : current.id === 'route' ? '92rem' : '68rem'}
 	height={lesson ? '90rem' : undefined}
 	dismiss="skip"

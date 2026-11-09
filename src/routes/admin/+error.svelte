@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 </script>
 
-<svelte:head><title>Academic office · kcal</title></svelte:head>
+<svelte:head><title>Academic office · tracker</title></svelte:head>
 
 <section class="office-card">
 	<h1>

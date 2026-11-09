@@ -1,160 +1,216 @@
 <script lang="ts">
+	import Panel from '$lib/ui/Panel.svelte';
+	import PanelHeader from '$lib/ui/PanelHeader.svelte';
+	import Toolbar from '$lib/ui/Toolbar.svelte';
+	import Disclosure from '$lib/ui/Disclosure.svelte';
+	import { page } from '$app/state';
 	import CourseList from '$lib/site/CourseList.svelte';
 	import { REPS_YEAR } from '$lib/curriculum/reps';
-
-	let { data } = $props();
-	const credits = (n: number) => `${n} credit${n === 1 ? '' : 's'}`;
+	import type { PageData } from './$types';
+	let { data }: { data: PageData } = $props();
+	let selected = $state('');
+	const current = $derived(
+		data.programmes.find((p) => p.key === (selected || page.url.hash.slice(1))) ?? data.programmes[0]
+	);
 </script>
 
 <svelte:head>
-	<title>{data.subject.label} programmes · kcal</title>
+	<title>{data.subject.label} programmes · tracker</title>
 	<meta
 		name="description"
 		content="The {data.subject.label} major, minor and concentration at Krea: credits, required courses and choices."
 	/>
 </svelte:head>
 
-<header style:--hue={data.subject.hue}>
-	<a class="up" href="/programmes">← all programmes</a>
-	<h1>{data.subject.label}</h1>
-	{#if data.reps.length}
-		<p class="reps">Student reps ({REPS_YEAR}): <b>{data.reps.join(', ')}</b></p>
-	{/if}
-	<p class="lede">The rules for the {data.batches}. Jump to a programme:</p>
-	<nav aria-label="programmes">
-		{#each data.programmes as p (p.key)}<a href="#{p.key}">{p.label}</a>{/each}
-	</nav>
-</header>
+<Panel style={`--hue: ${data.subject.hue ?? 300}`}
+	><div class="programme-page">
+		<aside class="programme-sidebar">
+			<Toolbar tone="warm"><a class="up" href="/programmes">← programmes</a></Toolbar>
+			<PanelHeader title={data.subject.label} subtitle={data.batches} level={1} />
+			<nav aria-label="Choose a programme pathway">
+				<h2>pathway</h2>
+				{#each data.programmes as p (p.key)}
+					<button
+						class:active={current?.key === p.key}
+						aria-pressed={current?.key === p.key}
+						onclick={() => (selected = p.key)}
+					>
+						<span>{p.label}</span><span class="nav-credits">{p.credits.total} cr</span>
+					</button>
+				{/each}
+			</nav>
+			{#if data.reps.length}
+				<section class="reps">
+					<h2>student reps <span>{REPS_YEAR}</span></h2>
+					{#each data.reps as rep}<p>{rep}</p>{/each}
+				</section>
+			{/if}
+			<p class="sidebar-note">Choose a pathway to see its required courses and electives.</p>
+		</aside>
 
-{#each data.programmes as p (p.key)}
-	<section id={p.key}>
-		<h2>{p.label}</h2>
-		<p class="credits">
-			<b>{credits(p.credits.total)}</b>
-			{#if p.credits.required !== null}· {p.credits.required} required{/if}
-			{#if p.credits.elective}· {p.credits.elective} elective{/if}
-		</p>
-
-		<h3>required</h3>
-		<CourseList courses={p.required} empty="No fixed course, see the choices below." />
-
-		{#each p.choices as choice, i (i)}
-			<h3>{choice.rule} <small>choose {choice.pick}</small></h3>
-			<CourseList courses={choice.options} />
-		{/each}
-
-		{#if p.electives.length}
-			<details>
-				<summary>electives that count <small>{p.electives.length}</small></summary>
-				<CourseList courses={p.electives} />
-			</details>
-		{/if}
-	</section>
-{/each}
+		<div class="requirements">
+			{#if current}
+				{#key current.key}
+					<PanelHeader title={current.label} subtitle="programme requirements" id={current.key}>
+						<div class="total"><strong>{current.credits.total}</strong><span>credits</span></div>
+					</PanelHeader>
+					<Toolbar class="credit-strip">
+						{#if current.credits.required !== null}<span
+								><i class="required-dot"></i><b>{current.credits.required}</b> required</span
+							>{/if}
+						{#if current.credits.elective !== null}<span
+								><i class="elective-dot"></i><b>{current.credits.elective}</b> elective</span
+							>{/if}
+						<span class="scope">{data.batches}</span>
+					</Toolbar>
+					<Disclosure title="required courses" meta={`${current.required.length} listed`} open>
+						<CourseList courses={current.required} empty="No fixed courses. See the choices below." />
+					</Disclosure>
+					{#each current.choices as choice, i (i)}
+						<Disclosure title={choice.rule} meta={`choose ${choice.pick}`} open
+							><CourseList courses={choice.options} /></Disclosure
+						>
+					{/each}
+					{#if current.electives.length}
+						<Disclosure title="electives that count" meta={`${current.electives.length} courses`}
+							><CourseList courses={current.electives} /></Disclosure
+						>
+					{/if}
+				{/key}
+			{:else}<p class="sidebar-note">No requirements are listed for this programme yet.</p>{/if}
+		</div>
+	</div></Panel
+>
 
 <style lang="scss">
 	@use '$lib/styles/mixins' as *;
-	header {
-		padding-bottom: 2.4rem;
-		border-bottom: 1px dotted var(--color-border-light);
+	.programme-page {
+		display: grid;
+		grid-template-columns: 25rem minmax(0, 1fr);
 	}
-
+	.programme-sidebar {
+		background: linear-gradient(var(--color-bg-sidebar), var(--color-bg-sidebar-end));
+		border-right: 1px solid var(--color-border);
+	}
 	.up {
-		font-size: 1.35rem;
-		color: var(--color-accent);
-		text-underline-offset: 0.2em;
-	}
-
-	h1 {
-		margin-top: 0.8rem;
-		font-size: 3.4rem;
-		letter-spacing: -0.02em;
-		color: var(--color-text);
-	}
-
-	.reps {
-		margin-top: 0.6rem;
-		font-size: 1.4rem;
 		color: var(--color-text-muted);
-
-		b {
-			font-weight: 600;
-			color: var(--color-text);
-		}
+		font-size: var(--text-small);
 	}
-
-	.lede {
-		margin-top: 0.6rem;
-		font-size: 1.55rem;
-		color: var(--color-text-muted);
-	}
-
 	nav {
+		padding: 1rem;
+	}
+	nav h2,
+	.reps h2 {
+		@include section-label;
+		margin: 0 0.6rem 0.8rem;
+	}
+	nav button {
+		@include store-button;
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.6rem;
-		margin-top: 1.2rem;
-
-		a {
-			padding: 0.4rem 1rem;
-			font-size: 1.3rem;
-			@include subject-pill;
-			text-decoration: none;
-
-			&:hover {
-				background: subject-tone(required);
-			}
-		}
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		width: 100%;
+		margin-top: 0.5rem;
+		padding: 0.7rem 0.8rem;
+		font: inherit;
+		font-size: var(--text-small);
+		text-align: left;
 	}
-
-	section {
-		margin-top: 3.2rem;
-		padding: 2rem 2.2rem;
-		background: var(--color-bg-light);
-		border: 1px solid var(--color-border-card);
-		border-radius: 8px;
-		box-shadow: var(--shadow-card);
-		scroll-margin-top: 1.6rem;
+	nav button.active {
+		color: var(--color-on-accent);
+		background-color: var(--color-accent);
+		border-color: var(--color-control-deep);
+		@include glossy-accent;
 	}
-
-	h2 {
-		font-size: 2.2rem;
+	nav button:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
 	}
-
-	.credits {
+	.nav-credits {
+		white-space: nowrap;
+		font-size: 1.1rem;
+	}
+	.reps {
+		margin: 0 var(--panel-gutter);
+		padding: 1.2rem 0;
+		border-top: 1px dotted var(--color-border-card);
+	}
+	.reps h2 {
+		margin-left: 0;
+	}
+	.reps h2 span {
+		font-weight: 400;
+		text-transform: none;
+	}
+	.reps p {
 		margin-top: 0.4rem;
-		font-size: 1.45rem;
+		font-size: var(--text-small);
+	}
+	.sidebar-note {
+		padding: 1.2rem var(--panel-gutter);
+		font-size: var(--text-small);
+		line-height: 1.5;
 		color: var(--color-text-muted);
-
-		b {
-			color: var(--color-text);
-		}
 	}
-
-	h3 {
-		margin: 2rem 0 0.6rem;
-		font-size: 1.5rem;
-
-		small {
-			margin-left: 0.6rem;
-			font-size: 1.2rem;
-			font-weight: 500;
-			color: var(--color-text-muted);
-		}
+	.requirements {
+		min-width: 0;
 	}
-
-	details {
-		margin-top: 2rem;
-
-		summary {
-			cursor: pointer;
-			font-size: 1.5rem;
-			font-weight: 700;
-
-			small {
-				font-weight: 500;
-				color: var(--color-text-muted);
-			}
+	.total {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+	.total strong {
+		font-size: 2.4rem;
+		font-weight: 500;
+	}
+	.total span {
+		font-size: var(--text-small);
+		color: var(--color-text-muted);
+	}
+	:global(.credit-strip > span) {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	:global(.credit-strip) i {
+		width: 0.8rem;
+		height: 0.8rem;
+		border: 1px solid var(--color-border-card);
+		border-radius: 2px;
+	}
+	.required-dot {
+		background: var(--color-course-required-deep);
+	}
+	.elective-dot {
+		background: var(--color-course-elective);
+	}
+	.scope {
+		margin-left: auto;
+		color: var(--bar-text-muted);
+	}
+	@media (max-width: 767px) {
+		.programme-page {
+			grid-template-columns: 1fr;
+		}
+		.programme-sidebar {
+			border-right: 0;
+			border-bottom: 1px solid var(--color-border);
+		}
+		nav {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 0.5rem;
+		}
+		nav h2 {
+			grid-column: 1 / -1;
+		}
+		nav button {
+			margin: 0;
+		}
+		.sidebar-note {
+			display: none;
 		}
 	}
 </style>

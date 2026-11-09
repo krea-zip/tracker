@@ -29,7 +29,7 @@
 		<p>
 			Any course in a group can satisfy a prerequisite or required-course reference to another member of that group.
 		</p>
-		{#each office.document.curriculum.equivalences.substitutes as group, i}<div class="office-card">
+		{#each office.document.curriculum.equivalences.substitutes, i}<div class="office-card">
 				<CoursePicker
 					courses={office.document.curriculum.courses}
 					bind:values={office.document.curriculum.equivalences.substitutes[i]}

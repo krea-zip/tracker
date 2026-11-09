@@ -1,81 +1,100 @@
 <script lang="ts">
+	import Panel from '$lib/ui/Panel.svelte';
+	import PanelHeader from '$lib/ui/PanelHeader.svelte';
+	import Toolbar from '$lib/ui/Toolbar.svelte';
+	import Button from '$lib/ui/Button.svelte';
+	import '$lib/site/directory.scss';
+	import Disclosure from '$lib/ui/Disclosure.svelte';
 	import CourseList from '$lib/site/CourseList.svelte';
-
-	let { data } = $props();
+	import type { PageData } from './$types';
+	let { data }: { data: PageData } = $props();
+	let query = $state('');
+	let subject = $state('all');
+	let credit = $state('all');
 	const total = $derived(new Set(data.subjects.flatMap((s) => s.courses.map((c) => c.code))).size);
+	const creditOptions = $derived(
+		[...new Set(data.subjects.flatMap((s) => s.courses.map((c) => c.credits)))].sort((a, b) => a - b)
+	);
+	const filtered = $derived(
+		data.subjects
+			.filter((s) => subject === 'all' || subject === s.slug)
+			.map((s) => ({
+				...s,
+				courses: s.courses.filter(
+					(c) =>
+						query
+							.trim()
+							.toLowerCase()
+							.split(/\s+/)
+							.every((q) => `${c.code} ${c.shownAs} ${c.title} ${s.label}`.toLowerCase().includes(q)) &&
+						(credit === 'all' || c.credits === Number(credit))
+				)
+			}))
+			.filter((s) => s.courses.length)
+	);
+	const count = $derived(new Set(filtered.flatMap((s) => s.courses.map((c) => c.code))).size);
+	function reset() {
+		query = '';
+		subject = 'all';
+		credit = 'all';
+	}
 </script>
 
-<svelte:head>
-	<title>Courses · kcal</title>
-	<meta
+<svelte:head
+	><title>Courses · tracker</title><meta
 		name="description"
-		content="Every undergraduate course at Krea's SIAS, by subject: credits, when it runs and who teaches it."
-	/>
-</svelte:head>
+		content="Search Krea undergraduate courses by title, code, subject and credits. Find prerequisites, teaching history and programme requirements."
+	/></svelte:head
+>
+<Panel class="directory">
+	<PanelHeader
+		title="courses"
+		level={1}
+		subtitle="Course codes, credits and prerequisites · browse the undergraduate catalogue."
+		><span class="directory-count">{total} courses · Krea SIAS</span></PanelHeader
+	>
+	<Toolbar tone="warm" class="directory-controls">
+		<label class="search">search<input type="search" placeholder="course title or code…" bind:value={query} /></label>
+		<label
+			>subject<select bind:value={subject}
+				><option value="all">all subjects</option>{#each data.subjects as s}<option value={s.slug}>{s.label}</option
+					>{/each}</select
+			></label
+		>
+		<label
+			>credits<select bind:value={credit}
+				><option value="all">any</option>{#each creditOptions as n}<option value={String(n)}>{n} cr</option
+					>{/each}</select
+			></label
+		>
+	</Toolbar>
+	<Toolbar class="result-line">
+		<p role="status">{count} of {total} courses · {filtered.length} subjects</p>
+		{#if query || subject !== 'all' || credit !== 'all'}<Button variant="quiet" class="reset" onclick={reset}
+				>clear filters</Button
+			>{:else}<span>Cross-listed courses appear under each subject</span>{/if}
+	</Toolbar>
+	<div class="course-groups">
+		{#each filtered as s (s.slug)}<Disclosure title={s.label} meta={String(s.courses.length)} open id={s.slug}
+				><CourseList courses={s.courses} />
+			</Disclosure>{/each}
+	</div>
+	{#if !filtered.length}<div class="empty">
+			<h2>No courses found</h2>
+			<p>Try another title, code or filter.</p>
+			<Button variant="quiet" class="reset" onclick={reset}>clear filters</Button>
+		</div>{/if}
+</Panel>
 
-<h1>courses</h1>
-<p class="lede">{total} undergraduate courses, listed under every subject that offers them.</p>
-
-<nav class="jump" aria-label="subjects">
-	{#each data.subjects as s (s.slug)}
-		<a href="#{s.slug}" style:--hue={s.hue}>{s.label}</a>
-	{/each}
-</nav>
-
-{#each data.subjects as s (s.slug)}
-	<section id={s.slug} style:--hue={s.hue}>
-		<h2>{s.label} <small>{s.courses.length}</small></h2>
-		<CourseList courses={s.courses} />
-	</section>
-{/each}
-
-<style lang="scss">
-	@use '$lib/styles/mixins' as *;
-	h1 {
-		font-size: 3.2rem;
-		letter-spacing: -0.02em;
+<style>
+	.course-groups {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
 	}
-
-	.lede {
-		margin-top: 0.6rem;
-		font-size: 1.6rem;
-		color: var(--color-text-muted);
-	}
-
-	.jump {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.6rem;
-		margin: 2.4rem 0 1.2rem;
-
-		a {
-			padding: 0.4rem 1rem;
-			font-size: 1.3rem;
-			@include subject-pill;
-			text-decoration: none;
-
-			&:hover {
-				background: subject-tone(required);
-			}
-		}
-	}
-
-	section {
-		padding-top: 2.4rem;
-		margin-top: 2.4rem;
-		border-top: 1px dotted var(--color-border-light);
-		scroll-margin-top: 1.6rem;
-	}
-
-	h2 {
-		margin-bottom: 1rem;
-		font-size: 2rem;
-		color: oklch(0.45 0.08 var(--hue, 300));
-
-		small {
-			font-size: 1.3rem;
-			font-weight: 500;
-			color: var(--color-text-muted);
+	@media (max-width: 850px) {
+		.course-groups {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

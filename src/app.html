@@ -3,19 +3,22 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>kcal</title>
-		<!-- Preserve browser data from before the kcal rename (tracey → relay → kcal)
-		     before app modules load. Newest name first, so its data wins. -->
+		<title>tracker</title>
+		<!-- Preserve browser data from before the tracker rename (tracey → relay → kcal → tracker)
+		     before app modules load. Newest name first, so its data wins. Old keys go once
+		     moved, so something the app later deletes can't come back from them. -->
 		<script>
 			try {
 				var keys = Object.keys(localStorage);
-				for (var prefix of ['relay-', 'tracey-']) {
+				for (var prefix of ['kcal-', 'kcal.', 'relay-', 'tracey-']) {
 					for (var key of keys) {
 						if (!key.startsWith(prefix)) continue;
-						var nextKey = 'kcal-' + key.slice(prefix.length);
+						// keeps the separator: kcal-plan → tracker-plan, kcal.headLine → tracker.headLine
+						var nextKey = 'tracker' + key.slice(prefix.length - 1);
 						if (localStorage.getItem(nextKey) === null) {
 							localStorage.setItem(nextKey, localStorage.getItem(key));
 						}
+						localStorage.removeItem(key);
 					}
 				}
 			} catch (e) {
@@ -27,7 +30,7 @@
 		     shape in $lib/ui/settings.svelte.ts, change both together. -->
 		<script>
 			try {
-				var s = JSON.parse(localStorage.getItem('kcal-settings') || '{}');
+				var s = JSON.parse(localStorage.getItem('tracker-settings') || '{}');
 				var t = s.theme || 'light';
 				if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 				document.documentElement.dataset.theme = t;

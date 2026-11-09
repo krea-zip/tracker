@@ -53,7 +53,7 @@ class Account {
 			}
 			const client = await getSupabase();
 			const callback = new URL('/auth/callback', location.origin);
-			sessionStorage.setItem('kcal-auth-return', returnTo);
+			sessionStorage.setItem('tracker-auth-return', returnTo);
 			const { error } = await client.auth.signInWithOAuth({
 				provider: 'google',
 				options: {

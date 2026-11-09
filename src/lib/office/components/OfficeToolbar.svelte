@@ -64,7 +64,7 @@
 />
 
 <header class="office-head">
-	<a class="office-brand" href="/admin">kcal<span>office</span></a>
+	<a class="office-brand" href="/admin">tracker<span>office</span></a>
 	<OfficeSearch onaction={run} />
 	<div class="office-save-state" role="status" title={office.message}>
 		<span class="office-status-dot" class:unsaved={office.dirty}></span>{standing}

@@ -124,18 +124,6 @@ export function prereqChain(plan: Plan, root: string): Chain {
 	return { root, nodes, edges, missing, before, after };
 }
 
-/** the last trimester the plan uses, a course or a break, and the n + 2
- *  year limit an n-year degree has to finish inside */
-export function planEnd(plan: Plan): { end: Here | null; limitYears: number } {
-	let last = -1;
-	for (const a of plan.attempts) last = Math.max(last, slotOrder(a.year, a.trim));
-	for (const key of Object.keys(plan.breaks)) {
-		const [year, trim] = key.split('-').map(Number);
-		last = Math.max(last, slotOrder(year, trim));
-	}
-	return { end: last >= 0 ? slotAt(last) : null, limitYears: plan.minYears + 2 };
-}
-
 // ── what-if ──
 
 export type Needed = {

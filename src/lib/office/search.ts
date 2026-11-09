@@ -281,7 +281,7 @@ const ACTIONS: SearchEntry[] = [
 ];
 
 /** how well an entry answers the query; 0 means every word didn't match */
-export function scoreEntry(entry: SearchEntry, words: string[]): number {
+function scoreEntry(entry: SearchEntry, words: string[]): number {
 	const label = entry.label.toLowerCase();
 	const all = `${label} ${entry.detail} ${entry.words ?? ''}`.toLowerCase();
 	let score = 0;

@@ -47,14 +47,6 @@
 	}
 }
 
-// The recessed track segmented controls sit in
-@mixin well {
-	background: var(--color-bg);
-	border: 1px solid var(--color-border-card);
-	border-radius: 6px;
-	box-shadow: var(--shadow-well);
-}
-
 // Segmented control: one continuous rounded bar, segments flush against
 // each other with a hairline between them, no gaps, no inner corners. The
 // live segment is the lit plum face. Apply to the container.
@@ -236,7 +228,7 @@
 		$pixel-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' shape-rendering='crispEdges'%3E%3Cpath d='M10 3h2v1h-2zM9 4h3v1H9zM8 5h3v1H8zM2 6h2v1H2zM7 6h3v1H7zM2 7h3v1H2zM6 7h3v1H6zM3 8h5v1H3zM4 9h3v1H4zM5 10h1v1H5z'/%3E%3C/svg%3E");
 		-webkit-mask: $pixel-tick center / 100% 100% no-repeat;
 		mask: $pixel-tick center / 100% 100% no-repeat;
-		animation: kcal-tick-draw 0.16s steps(5, end) both;
+		animation: tracker-tick-draw 0.16s steps(5, end) both;
 	}
 }
 
@@ -249,39 +241,11 @@
 	letter-spacing: 0.05em;
 }
 
-// Label → value info row, shared with kreabot
-@mixin info-row($label-width: 15.6rem) {
-	display: grid;
-	grid-template-columns: $label-width 1fr;
-	gap: 1rem;
-	font-size: 1.4rem;
-	color: var(--color-text);
-}
-
 // Empty state italic text
 @mixin empty-text {
 	font-size: 1.3rem;
 	color: var(--color-text-muted);
 	font-style: italic;
-}
-
-// Sidebar nav link, shared with kreabot
-@mixin nav-link {
-	padding: 0.5rem 1.6rem;
-	color: var(--color-text);
-	text-decoration: none;
-	font-size: 1.3rem;
-	transition: background 0.2s ease;
-
-	&:hover {
-		background: var(--color-hover-medium);
-	}
-
-	&.active {
-		background: var(--color-active-strong);
-		font-weight: 600;
-		@include card-shine;
-	}
 }
 
 // A subject colour at one of the shared depths (see Course colours in
@@ -549,24 +513,9 @@ $shape-circle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 	}
 }
 
-// the one solid button a small planner dialog leads with ("open the shared
-// plan", "continue on phone")
-@mixin modal-button {
-	padding: 1rem 1.6rem;
-	font: inherit;
-	font-size: 1.5rem;
-	font-weight: 700;
-	color: var(--color-on-accent);
-	background-color: var(--color-accent);
-	border: 1px solid var(--color-control-deep);
-	border-radius: 6px;
-	cursor: pointer;
-	@include glossy-accent;
-}
-
 // a year added just now drops into its row, trimester by trimester (--t)
 @mixin drop-in {
-	animation: kcal-drop-in 0.45s var(--spring) both;
+	animation: tracker-drop-in 0.45s var(--spring) both;
 	animation-delay: calc(var(--t, 0) * 45ms);
 }
 

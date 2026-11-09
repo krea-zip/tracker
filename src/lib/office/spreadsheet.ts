@@ -11,7 +11,7 @@ import {
 	type SourceImport
 } from './model.ts';
 
-export function parseCsv(input: string): string[][] {
+function parseCsv(input: string): string[][] {
 	const rows: string[][] = [];
 	let row: string[] = [],
 		field = '',
@@ -42,24 +42,8 @@ export function parseCsv(input: string): string[][] {
 	}
 	return rows;
 }
-export function csvText(rows: unknown[][]): string {
-	return (
-		'\uFEFF' +
-		rows
-			.map((row) =>
-				row
-					.map((value) => {
-						let s = String(value ?? '');
-						if (/^[\s]*[=+@-]/.test(s)) s = "'" + s;
-						return '"' + s.replace(/"/g, '""') + '"';
-					})
-					.join(',')
-			)
-			.join('\r\n')
-	);
-}
-export const normalHeader = (v: string) => v.toLowerCase().replace(/\s+/g, ' ').trim();
-export const codesIn = (v: string) => [
+const normalHeader = (v: string) => v.toLowerCase().replace(/\s+/g, ' ').trim();
+const codesIn = (v: string) => [
 	...new Set((v.toUpperCase().match(/\b[A-Z]{2,5}\s*\d{3}[A-Z]?\b/g) ?? []).map((c) => c.replace(/\s/g, '')))
 ];
 const blank = (v: string) => /^(?:|[-–\u2014]+|none\.?|nil|n\/?a|tbd)$/i.test(v.trim());
@@ -117,7 +101,7 @@ export function detectMapping(headers: string[]): Mapping {
 	});
 	return out;
 }
-export function parsePrerequisites(text: string, doc: OfficeDocument): { rule: AdmissionRule; uncertain: boolean } {
+function parsePrerequisites(text: string, doc: OfficeDocument): { rule: AdmissionRule; uncertain: boolean } {
 	const rule: AdmissionRule = {
 		groups: [],
 		recommended: [],

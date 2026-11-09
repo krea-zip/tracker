@@ -8,16 +8,16 @@ import { newCourse, type OfficeDocument } from './model';
 import type { RuleKey } from './policies';
 
 const KEYS = {
-	courses: 'kcal-course-edits',
-	newCourses: 'kcal-new-courses',
-	rules: 'kcal-rule-edits',
-	share: 'kcal-credit-sharing',
-	prereqs: 'kcal-prereq-edits',
-	batches: 'kcal-batch-edits',
-	descriptions: 'kcal-description-edits',
-	lecturers: 'kcal-lecturer-edits',
-	subjects: 'kcal-subject-edits',
-	programmes: 'kcal-programme-edits'
+	courses: 'tracker-course-edits',
+	newCourses: 'tracker-new-courses',
+	rules: 'tracker-rule-edits',
+	share: 'tracker-credit-sharing',
+	prereqs: 'tracker-prereq-edits',
+	batches: 'tracker-batch-edits',
+	descriptions: 'tracker-description-edits',
+	lecturers: 'tracker-lecturer-edits',
+	subjects: 'tracker-subject-edits',
+	programmes: 'tracker-programme-edits'
 } as const;
 
 type Raw = Record<string, unknown>;

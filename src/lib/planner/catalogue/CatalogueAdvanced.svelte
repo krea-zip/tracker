@@ -67,66 +67,66 @@
 
 {#if advanced}
 	<div class="slot" transition:slide={motion()}>
-	<div class="fold">
-		<div class="line">
-			<span class="label">
-				show
-				<button
-					class="explain"
-					class:on={explaining}
-					aria-expanded={explaining}
-					aria-label="what these filters mean"
-					title="what these filters mean"
-					onclick={() => (explaining = !explaining)}><PixelIcon name="help" snap /></button
-				>
-			</span>
-			<div class="pills" role="group" aria-label="planning filters">
-				{#each quick as q (q.id)}
-					{@render pill(q.label, plan.quick.includes(q.id), () => (plan.quick = toggled(plan.quick, q.id)), q.note)}
-				{/each}
+		<div class="fold">
+			<div class="line">
+				<span class="label">
+					show
+					<button
+						class="explain"
+						class:on={explaining}
+						aria-expanded={explaining}
+						aria-label="what these filters mean"
+						title="what these filters mean"
+						onclick={() => (explaining = !explaining)}><PixelIcon name="help" snap /></button
+					>
+				</span>
+				<div class="pills" role="group" aria-label="planning filters">
+					{#each quick as q (q.id)}
+						{@render pill(q.label, plan.quick.includes(q.id), () => (plan.quick = toggled(plan.quick, q.id)), q.note)}
+					{/each}
+				</div>
+			</div>
+			{#if explaining}
+				<dl class="notes" transition:slide={motion()}>
+					{#each quick as q (q.id)}
+						<dt>{q.label}</dt>
+						<dd>{q.note}</dd>
+					{/each}
+				</dl>
+			{/if}
+			<div class="line">
+				<span class="label">type</span>
+				<div class="pills" role="group" aria-label="course type">
+					{#each kinds as k (k.id)}
+						{@render pill(k.label, plan.kinds.includes(k.id), () => (plan.kinds = toggled(plan.kinds, k.id)), k.note)}
+					{/each}
+				</div>
+			</div>
+			<div class="line">
+				<span class="label">offered</span>
+				<div class="pills" role="group" aria-label="offered in">
+					{#each TERMS as t (t)}
+						{@render pill(
+							`t${t}`,
+							plan.catalogueTerms.includes(t),
+							() => (plan.catalogueTerms = toggled(plan.catalogueTerms, t))
+						)}
+					{/each}
+				</div>
+			</div>
+			<div class="line">
+				<span class="label">credits</span>
+				<div class="pills" role="group" aria-label="credits">
+					{#each CREDITS as c (c)}
+						{@render pill(
+							`${c}`,
+							plan.catalogueCredits.includes(c),
+							() => (plan.catalogueCredits = toggled(plan.catalogueCredits, c))
+						)}
+					{/each}
+				</div>
 			</div>
 		</div>
-		{#if explaining}
-			<dl class="notes" transition:slide={motion()}>
-				{#each quick as q (q.id)}
-					<dt>{q.label}</dt>
-					<dd>{q.note}</dd>
-				{/each}
-			</dl>
-		{/if}
-		<div class="line">
-			<span class="label">type</span>
-			<div class="pills" role="group" aria-label="course type">
-				{#each kinds as k (k.id)}
-					{@render pill(k.label, plan.kinds.includes(k.id), () => (plan.kinds = toggled(plan.kinds, k.id)), k.note)}
-				{/each}
-			</div>
-		</div>
-		<div class="line">
-			<span class="label">offered</span>
-			<div class="pills" role="group" aria-label="offered in">
-				{#each TERMS as t (t)}
-					{@render pill(
-						`t${t}`,
-						plan.catalogueTerms.includes(t),
-						() => (plan.catalogueTerms = toggled(plan.catalogueTerms, t))
-					)}
-				{/each}
-			</div>
-		</div>
-		<div class="line">
-			<span class="label">credits</span>
-			<div class="pills" role="group" aria-label="credits">
-				{#each CREDITS as c (c)}
-					{@render pill(
-						`${c}`,
-						plan.catalogueCredits.includes(c),
-						() => (plan.catalogueCredits = toggled(plan.catalogueCredits, c))
-					)}
-				{/each}
-			</div>
-		</div>
-	</div>
 	</div>
 {/if}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Portrait from '$lib/lecturers/Portrait.svelte';
 	import { usePlan } from '$lib/planner/context';
 	import type { Course } from '$lib/types';
 	import { facultyOf, isCore, taughtBy, termLabel } from '$lib/curriculum/data';
@@ -22,23 +23,12 @@
 <!-- profs rotate every year, so this is context, not a promise, but
 		     who they are and when to find them is what a student asks next -->
 {#if !isCore(c.code) && profs.length}
-	<div class="label">recently taught by</div>
-	<p class="d-muted">Past teaching records; the instructor for your term may differ.</p>
+	<div class="label" title="Past teaching records; the instructor for your term may differ.">recently taught by</div>
 	<div class="d-profs">
 		{#each profs as p, pi (p.id)}
 			{@const terms = taughtBy(p)}
 			<div class="d-prof">
-				{#if p.image_url}
-					<img class="d-photo" src={p.image_url} alt="" loading="lazy" referrerpolicy="no-referrer" />
-				{:else}
-					<span class="d-photo d-initials" aria-hidden="true"
-						>{p.name
-							.split(' ')
-							.map((w) => w[0])
-							.slice(0, 2)
-							.join('')}</span
-					>
-				{/if}
+				<Portrait name={p.name} src={p.image_url} size="4.4rem" />
 				<div class="d-prof-text">
 					<div class="d-prof-heading">
 						<strong>{p.name}</strong>
@@ -118,34 +108,18 @@
 <style lang="scss">
 	@use '$lib/styles/mixins' as *;
 
-	.d-profs {
-		display: grid;
-		gap: 1rem;
-	}
 	.d-prof {
 		display: grid;
 		grid-template-columns: 4.4rem minmax(0, 1fr);
 		column-gap: 1.2rem;
-		padding: 1.4rem;
 		font-size: var(--text-body);
 		line-height: 1.5;
-		background: var(--color-bg-light);
-		border: 1px solid var(--color-border-card);
-		border-radius: 10px;
-	}
-	.d-photo {
-		width: 4.4rem;
-		height: 4.4rem;
-		object-fit: cover;
-		border-radius: 50%;
-		border: 1px solid var(--color-border-divider);
-		background: var(--color-subtle);
-	}
-	.d-initials {
-		display: grid;
-		place-items: center;
-		font-weight: 700;
-		color: var(--color-text-muted);
+
+		& + & {
+			margin: 0.8rem calc(-1 * var(--card-pad)) 0;
+			padding: 1rem var(--card-pad) 0;
+			border-top: 1px solid var(--color-border-divider);
+		}
 	}
 	.d-prof-text {
 		display: contents;
@@ -162,12 +136,13 @@
 		line-height: 1.35;
 	}
 	.d-muted {
+		margin: 0;
 		color: var(--color-text-muted);
 		font-size: 1.2rem;
 	}
 	.d-taught {
-		margin-inline: -1.4rem;
-		padding-inline: 1.4rem;
+		margin-inline: calc(-1 * var(--card-pad));
+		padding-inline: var(--card-pad);
 		grid-column: 1 / -1;
 		margin-top: 1.2rem;
 		border-top: 1px solid var(--color-border-divider);
@@ -289,7 +264,6 @@
 	}
 	.label {
 		@include section-label;
-		margin-top: 0.6rem;
 	}
 	@include touch {
 		.d-taught-head,

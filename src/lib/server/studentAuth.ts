@@ -38,7 +38,7 @@ export async function requireStudent(event: RequestEvent) {
 
 export async function requestDocument(event: RequestEvent): Promise<Record<string, unknown>> {
 	// Cookie-authenticated writes must originate from this site.
-	if (event.request.headers.get('origin') !== event.url.origin) error(403, 'Please make this request from kcal.');
+	if (event.request.headers.get('origin') !== event.url.origin) error(403, 'Please make this request from tracker.');
 	if (Number(event.request.headers.get('content-length')) > 300_000) error(413, 'This plan is too large.');
 	const text = await event.request.text();
 	if (new TextEncoder().encode(text).length > 300_000) error(413, 'This plan is too large.');

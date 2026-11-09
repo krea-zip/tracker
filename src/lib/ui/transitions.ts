@@ -105,7 +105,6 @@ export function softChanges(node: HTMLElement) {
 		'.d-head',
 		'.d-meta',
 		'.d-desc',
-		'.d-place-where',
 		'.p-num',
 		'.total b',
 		'.rule-text',

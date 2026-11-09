@@ -1,5 +1,2 @@
-// The public pages are the same for every visitor: built once from the
-// current curriculum release and served as plain HTML, with no client-side
-// JavaScript. Publishing a release rebuilds them (see docs/backend.md).
+// Public data is still prerendered; hydration enables search and shared settings.
 export const prerender = true;
-export const csr = false;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Toolbar from '$lib/ui/Toolbar.svelte';
 	// the bar over the board, sticky so it stays in reach while a long plan
 	// scrolls: history, what the board shows, how chips are labelled, what
 	// their colours mean, and where the plan stands at the far end
@@ -7,12 +8,13 @@
 	import Keys from './Keys.svelte';
 	import ViewPicker from './ViewPicker.svelte';
 	import ColourKey from './ColourKey.svelte';
+	import LabelKeys from './LabelKeys.svelte';
 	import CreditTotal from './CreditTotal.svelte';
 
 	const plan = usePlan();
 </script>
 
-<div class="board-bar" data-tour="board-toggles">
+<Toolbar class="board-bar" data-tour="board-toggles">
 	<Keys label="history" glyphs>
 		<button disabled={!plan.canUndo} title="undo (Ctrl+Z)" aria-label="undo" onclick={() => plan.undo()}>↶</button>
 		<button disabled={!plan.canRedo} title="redo (Ctrl+Shift+Z)" aria-label="redo" onclick={() => plan.redo()}>↷</button
@@ -29,13 +31,18 @@
 	<span class="rule" aria-hidden="true"></span>
 	<ColourKey />
 
+	{#if viewport.desktop}
+		<span class="rule" aria-hidden="true"></span>
+		<LabelKeys />
+	{/if}
+
 	<div class="end"><CreditTotal /></div>
-</div>
+</Toolbar>
 
 <style lang="scss">
 	@use '$lib/styles/mixins' as *;
 
-	.board-bar {
+	:global(.board-bar) {
 		position: sticky;
 		top: 0;
 		z-index: 2;
@@ -45,9 +52,6 @@
 		flex-wrap: wrap;
 		min-height: 5.6rem;
 		padding: 0.8rem var(--board-gutter, 3.2rem);
-		background: linear-gradient(to bottom, var(--bar-top), var(--bar-bottom));
-		box-shadow: inset 0 1px 0 var(--bar-hi);
-		border-bottom: 1px solid var(--bar-edge);
 
 		// everything inside takes the bar's own steel palette (--bar-* in
 		// _variables); only the toggles go pink
@@ -66,7 +70,6 @@
 		);
 		--shadow-inset: inset 0 1px 0 var(--bar-hi);
 		--shadow-card: 0 0 0 transparent;
-		--key-pressed: inset 0 2px 3px rgba(20, 30, 50, 0.32), inset 0 1px 1px rgba(20, 30, 50, 0.2);
 	}
 
 	// the dotted rule between the bar's groups
@@ -80,11 +83,24 @@
 		margin-left: auto;
 	}
 
+	// a laptop-width board: decoration goes first, so the bar stays on one line
+	@container plan (max-width: 82rem) {
+		:global(.board-bar) {
+			gap: 1rem;
+		}
+
+		.rule,
+		:global(.board-bar) :global(.colour-key .keys .swatches),
+		:global(.board-bar) :global([aria-label='course labels'] svg) {
+			display: none;
+		}
+	}
+
 	// phones: one row that scrolls sideways rather than wrapping onto two.
 	// the bar isn't positioned here, so the dropdowns hang off the board
 	// instead and aren't clipped by the scrolling row (see ColourKey, ViewPicker)
 	@include mobile {
-		.board-bar {
+		:global(.board-bar) {
 			position: static;
 			flex-wrap: nowrap;
 			gap: 0.6rem;

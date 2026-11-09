@@ -117,7 +117,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		padding: 1.2rem 1.6rem;
+		padding: 1.2rem var(--panel-gutter);
 	}
 
 	// each programme on its own dotted rule, like the programmes above

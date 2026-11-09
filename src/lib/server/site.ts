@@ -1,6 +1,5 @@
-// Page data for the public site (/courses, /lecturers, /programmes). Runs at
-// build time only, those pages are prerendered and ship no JavaScript, so
-// it may read the whole curriculum freely.
+// Public page data is prepared on the server from the curriculum snapshot.
+// Pages are prerendered and hydrate their search and navigation controls.
 import { repsFor } from '$lib/curriculum/reps';
 import descriptions from '$lib/data/course-descriptions.json';
 import {
@@ -37,7 +36,11 @@ const courseLink = (code: string): CourseLink => {
 	const c = byCode(code);
 	return { code: c.code, title: c.title, credits: c.credits };
 };
-const lecturerLink = (p: Professor): LecturerLink => ({ id: p.id, name: p.name, title: p.position });
+const lecturerLink = (p: Professor): LecturerLink => ({
+	id: p.id,
+	name: p.name,
+	title: p.position
+});
 const byTitle = (a: { title: string }, b: { title: string }) => a.title.localeCompare(b.title);
 
 export const subjectSlug = (id: string) => id.replace(/ /g, '-');
@@ -58,16 +61,70 @@ export const batchLabel = () =>
 
 // ── programmes ──
 
-type Variant = { key: string; label: string; role: ProgrammeRole; fourYear: boolean; double: boolean };
+type Variant = {
+	key: string;
+	label: string;
+	role: ProgrammeRole;
+	fourYear: boolean;
+	double: boolean;
+};
 const VARIANTS: Variant[] = [
-	{ key: 'single_major_4yr', label: '4-year major', role: 'major', fourYear: true, double: false },
-	{ key: 'double_major_4yr', label: '4-year double major', role: 'major', fourYear: true, double: true },
-	{ key: 'single_major_3yr', label: '3-year major', role: 'major', fourYear: false, double: false },
-	{ key: 'double_major_3yr', label: '3-year double major', role: 'major', fourYear: false, double: true },
-	{ key: 'minor_4yr', label: '4-year minor', role: 'minor', fourYear: true, double: false },
-	{ key: 'minor_3yr', label: '3-year minor', role: 'minor', fourYear: false, double: false },
-	{ key: 'concentration_4yr', label: 'concentration (4-year)', role: 'concentration', fourYear: true, double: false },
-	{ key: 'concentration_3yr', label: 'concentration (3-year)', role: 'concentration', fourYear: false, double: false }
+	{
+		key: 'single_major_4yr',
+		label: '4-year major',
+		role: 'major',
+		fourYear: true,
+		double: false
+	},
+	{
+		key: 'double_major_4yr',
+		label: '4-year double major',
+		role: 'major',
+		fourYear: true,
+		double: true
+	},
+	{
+		key: 'single_major_3yr',
+		label: '3-year major',
+		role: 'major',
+		fourYear: false,
+		double: false
+	},
+	{
+		key: 'double_major_3yr',
+		label: '3-year double major',
+		role: 'major',
+		fourYear: false,
+		double: true
+	},
+	{
+		key: 'minor_4yr',
+		label: '4-year minor',
+		role: 'minor',
+		fourYear: true,
+		double: false
+	},
+	{
+		key: 'minor_3yr',
+		label: '3-year minor',
+		role: 'minor',
+		fourYear: false,
+		double: false
+	},
+	{
+		key: 'concentration_4yr',
+		label: 'concentration (4-year)',
+		role: 'concentration',
+		fourYear: true,
+		double: false
+	},
+	{
+		key: 'concentration_3yr',
+		label: 'concentration (3-year)',
+		role: 'concentration',
+		fourYear: false,
+		double: false
+	}
 ];
 const variantsOf = (subject: Subject) => VARIANTS.filter((v) => v.role !== 'major' || subject.majorable);
 const batch = () => CURRENT_REQUIREMENTS.batches[0];
@@ -77,7 +134,11 @@ export type ProgrammeView = {
 	label: string;
 	credits: { total: number; required: number | null; elective: number | null };
 	required: CourseLink[];
-	choices: { rule: string; pick: number; options: (CourseLink | { code: null; title: string })[] }[];
+	choices: {
+		rule: string;
+		pick: number;
+		options: (CourseLink | { code: null; title: string })[];
+	}[];
 	electives: CourseLink[];
 };
 
@@ -116,7 +177,14 @@ export function programmeIndex() {
 		slug: subjectSlug(s.id),
 		label: s.label,
 		hue: s.hue ?? null,
-		offers: [s.majorable && 'major', 'minor', 'concentration'].filter(Boolean) as string[],
+		offers: (['major', 'minor', 'concentration'] as const).filter(
+			(role) => (role !== 'major' || s.majorable) && creditsFor(s.id, role, true, false, batch()) > 0
+		),
+		credits: {
+			major: s.majorable ? creditsFor(s.id, 'major', true, false, batch()) : 0,
+			minor: creditsFor(s.id, 'minor', true, false, batch()),
+			concentration: creditsFor(s.id, 'concentration', true, false, batch())
+		},
 		courses: COURSES.filter((c) => c.subjects.includes(s.id)).length
 	}));
 }
@@ -139,7 +207,10 @@ export function courseIndex() {
 			label: s.label,
 			hue: s.hue ?? null,
 			courses: COURSES.filter((c) => c.subjects.includes(s.id))
-				.map((c) => ({ ...courseLink(c.code), shownAs: c.codesBySubject[s.id] ?? c.code }))
+				.map((c) => ({
+					...courseLink(c.code),
+					shownAs: c.codesBySubject[s.id] ?? c.code
+				}))
 				.sort((a, b) => a.shownAs.localeCompare(b.shownAs))
 		}))
 		.filter((s) => s.courses.length);
@@ -147,7 +218,13 @@ export function courseIndex() {
 
 /** Which programmes name a course, for the batches today's rules cover. */
 function programmesNaming(course: Course) {
-	const out: { subject: string; slug: string; required: string[]; choice: string[]; elective: string[] }[] = [];
+	const out: {
+		subject: string;
+		slug: string;
+		required: string[];
+		choice: string[];
+		elective: string[];
+	}[] = [];
 	for (const s of PROGRAMME_SUBJECTS) {
 		const row = {
 			subject: s.label,
@@ -204,9 +281,24 @@ export const courseCodes = () => COURSES.flatMap((c) => c.codes);
 // ── lecturers ──
 
 export function lecturerIndex() {
-	return LECTURERS.map((p) => ({ ...lecturerLink(p), courses: facultyCourses(p).length })).sort((a, b) =>
-		a.name.localeCompare(b.name)
-	);
+	return LECTURERS.map((p) => {
+		const courses = facultyCourses(p);
+		return {
+			...lecturerLink(p),
+			courses: courses.length,
+			email: p.email,
+			imageUrl: p.image_url,
+			officeHours: p.office_hours,
+			subjects: [...new Set(courses.flatMap((c) => c.subjects))]
+				.map((id) => ({
+					id,
+					label: subjectById(id).label,
+					hue: subjectById(id).hue ?? null
+				}))
+				.sort((a, b) => a.label.localeCompare(b.label)),
+			searchCourses: courses.map((c) => `${c.codes.join(' ')} ${c.title}`).join(' ')
+		};
+	}).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function lecturerPage(id: string) {
@@ -218,7 +310,10 @@ export function lecturerPage(id: string) {
 		officeHours: p.office_hours,
 		imageUrl: p.image_url,
 		profileUrl: p.url,
-		recent: taughtBy(p, 4).map((t) => ({ term: termLabel(t.term), courses: t.codes.map(courseLink) })),
+		recent: taughtBy(p, 4).map((t) => ({
+			term: termLabel(t.term),
+			courses: t.codes.map(courseLink)
+		})),
 		courses: facultyCourses(p).map((c) => courseLink(c.code))
 	};
 }

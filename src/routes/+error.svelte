@@ -5,7 +5,7 @@
 	const office = $derived(page.url.pathname.startsWith('/admin'));
 </script>
 
-<svelte:head><title>{page.status} · kcal</title></svelte:head>
+<svelte:head><title>{page.status} · tracker</title></svelte:head>
 
 <main>
 	<p class="status">{page.status}</p>

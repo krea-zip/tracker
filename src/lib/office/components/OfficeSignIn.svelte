@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Button from '$lib/ui/Button.svelte';
 	// the office's one shared password, plus a name for the history. the
 	// server checks the password and remembers the sign-in for a week
 	import { invalidate } from '$app/navigation';
@@ -33,7 +34,7 @@
 </script>
 
 <section class="office-login">
-	<a class="office-login-brand" href="/">kcal<span>academic office</span></a>
+	<a class="office-login-brand" href="/">tracker<span>academic office</span></a>
 	<div class="office-eyebrow">A little order. A clearer path.</div>
 	<h1>welcome to the office.</h1>
 	<p class="office-lead">One place to look after your courses, academic rules and the student experience.</p>
@@ -44,7 +45,7 @@
 			<label>your name<input bind:value={name} required maxlength="60" autocomplete="name" /></label>
 			<label>password<input type="password" bind:value={password} required autocomplete="current-password" /></label>
 			<div class="office-actions wide">
-				<button class="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+				<Button variant="primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
 			</div>
 		</form>
 		{#if problem}<p class="office-note error" role="alert">{problem}</p>{/if}

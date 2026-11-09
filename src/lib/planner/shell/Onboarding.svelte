@@ -12,7 +12,7 @@
 	const plan = usePlan();
 
 	// the old key, so anyone who already saw the welcome-and-tour isn't asked again
-	const SEEN_KEY = 'kcal-intro-seen';
+	const SEEN_KEY = 'tracker-intro-seen';
 
 	let welcome = $state(false);
 

@@ -16,8 +16,8 @@ export function takeIncoming(): Incoming {
 	let url = new URL(location.href);
 	if (url.searchParams.has('account')) {
 		try {
-			const saved = sessionStorage.getItem('kcal-auth-return');
-			sessionStorage.removeItem('kcal-auth-return');
+			const saved = sessionStorage.getItem('tracker-auth-return');
+			sessionStorage.removeItem('tracker-auth-return');
 			if (saved) {
 				const next = new URL(saved, location.origin);
 				if (next.origin === location.origin && next.pathname === '/') {

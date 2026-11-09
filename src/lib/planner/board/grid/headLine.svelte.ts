@@ -4,7 +4,7 @@
 // not in the plan.
 import { isPlayground } from '$lib/curriculum/runtime';
 
-const KEY = 'kcal.headLine';
+const KEY = 'tracker.headLine';
 
 class HeadLine {
 	// hidden by default (a faint ··· to bring them back). the server can't see

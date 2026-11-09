@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PanelHeader from '$lib/ui/PanelHeader.svelte';
 	import PixelIcon from '$lib/ui/PixelIcon.svelte';
 	import { usePlan } from '$lib/planner/context';
 	import CourseFaculty from './CourseFaculty.svelte';
@@ -49,7 +50,8 @@
 		if (shown) loadDescriptions();
 	});
 
-	const DESC_FOLD = 280;
+	const DESC_FOLD = 260;
+	const clip = (text: string, max: number) => `${text.slice(0, text.lastIndexOf(' ', max)).replace(/[\s,;:]+$/, '')}…`;
 	let descOpenFor = $state<string | null>(null);
 	let descOpen = $derived(descOpenFor !== null && descOpenFor === shown?.code);
 
@@ -101,6 +103,7 @@
 		for (const y of plan.years) for (const t of plan.trims) if (plan.canDrop(code, y, t)) return `${y}-${t}`;
 		return '2-1';
 	});
+	let moving = $derived(!!placedAt && target !== `${placedAt.year}-${placedAt.trim}`);
 	function placeIt() {
 		const code = shown?.code;
 		if (!code || !target) return;
@@ -129,8 +132,7 @@
 
 <svelte:window onkeydown={onkey} />
 
-<header class="col-header">
-	<h2>course</h2>
+<PanelHeader title="course" class="col-header">
 	{#if canPin || shown}
 		<div class="header-actions">
 			{#if canPin}
@@ -152,115 +154,114 @@
 			{/if}
 		</div>
 	{/if}
-</header>
+</PanelHeader>
 {#if shown}
 	{@const c = shown}
 	{@const ran = termsOffered(c.code)}
 	{@const desc = descriptionOf(c.code) ?? capstoneAbout(c.code)}
 	<div class="details">
-		<div class="d-head">
-			{#if plan.showCodes}<span class="d-code">{c.code}</span>{/if}
-			<span class="d-title">{c.title}</span>
-			{#if plan.showCodes && c.codes.length > 1}
-				<span class="d-xlist">cross-listed as {c.codes.filter((x) => x !== c.code).join(' · ')}</span>
-			{/if}
-		</div>
-
-		{#if c.pendingCredits && c.credits === 0}<p class="d-no-audit">
-				Offered in T2. Credits and prerequisites were not supplied; confirm these in admin before planning this course.
-			</p>{/if}
-		<div class="d-meta">
-			<div class="d-stat">
-				<span class="d-stat-label">credits</span>
-				<span class="d-stat-value">{c.pendingCredits && c.credits === 0 ? 'TBC' : c.credits}</span>
-			</div>
-			<!-- opens when it ran, term by term -->
-			<button
-				class="d-stat d-stat-btn"
-				class:open={ranOpen}
-				aria-expanded={ranOpen}
-				aria-controls="d-runs"
-				title={ranOpen ? 'hide when it ran' : 'when it ran, term by term'}
-				onclick={() => (ranOpen = !ranOpen)}
-			>
-				<span class="d-stat-label">offered</span>
-				<span class="d-stat-value">{c.offered.map((t) => `t${t}`).join(' ') || '–'}</span>
-				<span class="d-stat-sub"
-					>{ran.length ? `last ${ran[0]}` : 'no record'} <i class="d-caret" aria-hidden="true">▾</i></span
-				>
-			</button>
-			<div class="d-stat">
-				<span class="d-stat-label">type</span>
-				<span class="d-stat-value">{plan.courseType(c.code)}</span>
-				{#if rolesDiffer}
-					{@const elsewhere = roles.filter((r) => r.role !== plan.courseType(c.code))}
-					{#if elsewhere.length}<span
-							class="d-stat-sub wraps"
-							title="each department decides what a cross-listed course is to it"
-							>{elsewhere[0].role} in {elsewhere[0].scope}</span
-						>{/if}
+		<div class="d-card">
+			<div class="d-head">
+				{#if plan.showCodes}<span class="d-code">{c.code}</span>{/if}
+				<span class="d-title">{c.title}</span>
+				{#if plan.showCodes && c.codes.length > 1}
+					<span class="d-xlist">cross-listed as {c.codes.filter((x) => x !== c.code).join(' · ')}</span>
 				{/if}
 			</div>
-		</div>
 
-		{#if ranOpen}
-			<div class="d-runs" id="d-runs" transition:slide={{ duration: reducedMotion() ? 0 : 210, easing: cubicOut }}>
-				<table>
-					<caption>when it ran</caption>
-					<colgroup><col class="years" /><col /><col /><col /></colgroup>
-					<thead>
-						<tr>
-							<th></th>
-							{#each plan.trims as t (t)}
-								<th scope="col" class:mine={placedAt?.trim === t}
-									>{plan.trimNaming === 'year' ? `t${t}` : termMonthsShort(t)}{#if placedAt?.trim === t}<span
-											class="d-runs-tag">your plan</span
-										>{/if}</th
-								>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each runGrid(c.code) as row (row.yy)}
+			{#if c.pendingCredits && c.credits === 0}<p class="d-no-audit d-pending">
+					Offered in T2. Credits and prerequisites were not supplied; confirm these in admin before planning this
+					course.
+				</p>{/if}
+			<div class="d-meta">
+				<div class="d-stat">
+					<span class="d-stat-label">credits</span>
+					<span class="d-stat-value">{c.pendingCredits && c.credits === 0 ? 'TBC' : c.credits}</span>
+				</div>
+				<!-- opens when it ran, term by term -->
+				<button
+					class="d-stat d-stat-btn"
+					class:open={ranOpen}
+					aria-expanded={ranOpen}
+					aria-controls="d-runs"
+					title={ranOpen ? 'hide when it ran' : 'when it ran, term by term'}
+					onclick={() => (ranOpen = !ranOpen)}
+				>
+					<span class="d-stat-label">offered</span>
+					<span class="d-stat-value">{c.offered.map((t) => `t${t}`).join(' ') || '–'}</span>
+					<span class="d-stat-sub"
+						>{ran.length ? `last ${ran[0]}` : 'no record'} <i class="d-caret" aria-hidden="true">▾</i></span
+					>
+				</button>
+				<div class="d-stat">
+					<span class="d-stat-label">type</span>
+					<span class="d-stat-value">{plan.courseType(c.code)}</span>
+					{#if rolesDiffer}
+						{@const elsewhere = roles.filter((r) => r.role !== plan.courseType(c.code))}
+						{#if elsewhere.length}<span
+								class="d-stat-sub wraps"
+								title="each department decides what a cross-listed course is to it"
+								>{elsewhere[0].role} in {elsewhere[0].scope}</span
+							>{/if}
+					{/if}
+				</div>
+			</div>
+
+			{#if ranOpen}
+				<div class="d-runs" id="d-runs" transition:slide={{ duration: reducedMotion() ? 0 : 210, easing: cubicOut }}>
+					<table>
+						<caption>when it ran</caption>
+						<colgroup><col class="years" /><col /><col /><col /></colgroup>
+						<thead>
 							<tr>
-								<th scope="row">{row.yy} to {Number(row.yy) + 1}</th>
-								{#each row.cells as cell (cell.trim)}
-									<td
-										class:mine={placedAt?.trim === cell.trim}
-										class:at={placedYY === row.yy && placedAt?.trim === cell.trim}
-										><i class="d-run" data-state={cell.state} role="img" aria-label={cell.label} title={cell.label}
-										></i></td
+								<th></th>
+								{#each plan.trims as t (t)}
+									<th scope="col" class:mine={placedAt?.trim === t}
+										>{plan.trimNaming === 'year' ? `t${t}` : termMonthsShort(t)}{#if placedAt?.trim === t}<span
+												class="d-runs-tag">your plan</span
+											>{/if}</th
 									>
 								{/each}
 							</tr>
-						{/each}
-					</tbody>
-				</table>
-				{#if placedAt}
-					<p class="d-runs-say">in t{placedAt.trim}: {runText(c.code, placedAt.trim)}</p>
-				{/if}
-				<p class="d-runs-key">
-					<i class="d-run" data-state="ran"></i> ran <i class="d-run" data-state="not"></i> didn't run
-					<i class="d-run" data-state="none"></i> no timetable
-				</p>
-				<button class="d-runs-go" onclick={() => (plan.view = 'runs')}
-					>check every course on your plan: will it run? →</button
-				>
-			</div>
-		{/if}
-
-		<!-- Three sections, each under its own heading: what you do with the
-		     course on YOUR plan, how it fits your degree, and what it is. -->
-		<section class="d-section" aria-labelledby="d-sec-plan">
-			<h3 class="d-section-title" id="d-sec-plan">your plan</h3>
-
-			<!-- where it is on the plan, and a way to put it there without
-		     dragging, keyboard, touch, or just quicker -->
-			<div class="d-place">
-				<div class="d-place-heading">
-					<label for="course-trimester">trimester</label>
-					<span class="d-place-where">{placedAt ? termLabel(placedAt.year, placedAt.trim) : 'not added'}</span>
+						</thead>
+						<tbody>
+							{#each runGrid(c.code) as row (row.yy)}
+								<tr>
+									<th scope="row">{row.yy} to {Number(row.yy) + 1}</th>
+									{#each row.cells as cell (cell.trim)}
+										<td
+											class:mine={placedAt?.trim === cell.trim}
+											class:at={placedYY === row.yy && placedAt?.trim === cell.trim}
+											><i class="d-run" data-state={cell.state} role="img" aria-label={cell.label} title={cell.label}
+											></i></td
+										>
+									{/each}
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+					{#if placedAt}
+						<p class="d-runs-say">in t{placedAt.trim}: {runText(c.code, placedAt.trim)}</p>
+					{/if}
+					<p class="d-runs-key">
+						<i class="d-run" data-state="ran"></i> ran <i class="d-run" data-state="not"></i> didn't run
+						<i class="d-run" data-state="none"></i> no timetable
+					</p>
+					<button class="d-runs-go" onclick={() => (plan.view = 'runs')}
+						>check every course on your plan: will it run? →</button
+					>
 				</div>
+			{/if}
+		</div>
+
+		<!-- what you do with the course on YOUR plan, and how it fits your degree -->
+		<div class="d-card">
+			<section class="d-section" aria-labelledby="d-sec-plan">
+				<h3 class="d-section-title" id="d-sec-plan">your plan</h3>
+
+				<!-- where it is on the plan, and a way to put it there without
+			     dragging, keyboard, touch, or just quicker. the picker shows the
+			     current trimester, so the button only turns up with something to do -->
 				<div class="d-place-row">
 					<select id="course-trimester" bind:value={target} aria-label="trimester to put {c.code} in">
 						{#each plan.years as y (y)}
@@ -271,244 +272,238 @@
 							{/each}
 						{/each}
 					</select>
-					<button
-						class="d-place-go"
-						disabled={!!placedAt && target === `${placedAt.year}-${placedAt.trim}`}
-						onclick={placeIt}>{placedAt ? 'move' : attemptsHere.length ? 'add another attempt' : 'add to plan'}</button
-					>
+					{#if !placedAt || moving}
+						<button class="d-place-go" onclick={placeIt}
+							>{placedAt ? 'move' : attemptsHere.length ? 'add another attempt' : 'add to plan'}</button
+						>
+					{/if}
 					{#if placedAt}
 						<button class="d-place-remove" onclick={() => plan.remove(c.code)}>remove</button>
 					{/if}
 				</div>
-			</div>
 
-			{#if plan.onBoard(sid)}
-				{#key sid}
-					<details class="d-disclosure" open={plan.gradeMode || plan.isAudit(sid) || failed}>
-						<summary
-							><span>{plan.gradeMode ? 'grade, audit & result' : 'audit & result'}</span><span
-								class="chev"
-								aria-hidden="true"
-							></span></summary
-						>
-						<div class="d-disclosure-body">
-							{#if plan.gradeMode}
-								<!-- grade dropdown: letters count toward CGPA, Withdrawn / Incomplete
-				     don't. Hidden while auditing, since an audit carries no grade. -->
-								{#if !plan.isAudit(sid)}
-									<label class="d-grade">
-										<span>grade</span>
-										<select
-											value={plan.gradeOf(sid) ?? ''}
-											onchange={(e) => plan.setGrade(sid, (e.currentTarget.value || null) as GradeMark | null)}
-										>
-											<option value="">not graded</option>
-											{#each OTHER_MARKS as m (m.mark)}
-												<option value={m.mark}>{m.label}</option>
-											{/each}
-											<optgroup label="grade">
-												{#each GRADE_SCALE as g (g.letter)}
-													<option value={g.letter}>{g.letter} · {g.points}</option>
-												{/each}
-											</optgroup>
-										</select>
-									</label>
-								{/if}
-								<!-- audit sits under the grade, taking a course off the CGPA -->
-								{#if canAudit(c.code) && !isAttempt}
-									<label class="d-audit">
-										<input
-											type="checkbox"
-											checked={plan.isAudit(c.code)}
-											onchange={() => {
-												plan.toggleAudit(c.code);
-												if (plan.isAudit(c.code)) plan.setGrade(c.code, null);
-											}}
-										/>
-										<span>Audit this course (no credits or grade)</span>
-									</label>
-								{/if}
-							{:else if canAudit(c.code) && !isAttempt}
-								<label class="d-audit">
-									<input type="checkbox" checked={plan.isAudit(c.code)} onchange={() => plan.toggleAudit(c.code)} />
-									<span>Audit this course (no credits or grade)</span>
-								</label>
-							{:else if !isAttempt}
-								<!-- drop-form rule: audits are 2/4-credit courses, never KCCS/391/490/491 -->
-								<p class="d-no-audit">this course can't be taken as an audit</p>
-							{/if}
-
-							{#if !viewport.desktop}
-								<p class="d-no-audit">grades and your CGPA are on a laptop.</p>
-							{/if}
-
-							<!-- failing, grade view or not: this attempt stays on the grid, faded,
-			     as a record (a U), and the course is free to place again, the copy -->
-							<fieldset class="d-fail" disabled={plan.isAudit(sid)}>
-								<legend>result</legend>
-								<label>
-									<input
-										type="radio"
-										name="result-{sid}"
-										checked={!failed}
-										onchange={() => failed && plan.setGrade(sid, null)}
-									/>
-									<span>not failed</span>
-								</label>
-								<label>
-									<input
-										type="radio"
-										name="result-{sid}"
-										checked={failed}
-										onchange={() => !failed && plan.setGrade(sid, 'U')}
-									/>
-									<span>failed</span>
-								</label>
-							</fieldset>
-							{#if isAttempt}
-								<p class="d-fail-note">
-									This attempt stays on the grid, faded, as a U. {plan.onBoard(c.code)
-										? 'The copy is on your plan.'
-										: 'Place a copy: pick a trimester above, or drag the course from the catalogue.'}
-								</p>
-							{/if}
-						</div>
-					</details>
-				{/key}
-			{/if}
-
-			<!-- earlier attempts at this course, each opens its own record -->
-			{#if attemptsHere.length}
-				<div class="label">earlier attempts</div>
-				<div class="d-chips">
-					{#each attemptsHere as a (a.id)}
-						<button class="d-chip" onclick={() => plan.select(a.id)}>
-							{termLabel(a.year, a.trim)}<span class="d-chip-status">failed</span>
-						</button>
-					{/each}
-				</div>
-			{/if}
-		</section>
-
-		<!-- how it counts is the type tile's job (a cross-listed course's other
-		     role sits under it); this is what stands in for it, and what comes
-		     before and after -->
-		{#if c.prereqs.length || c.unlocks.some(hasCode) || swaps.length}
-			<section class="d-section" aria-labelledby="d-sec-degree">
-				<h3 class="d-section-title" id="d-sec-degree">in your degree</h3>
-
-				<!-- not the same course under another code (that's cross-listing,
-				     under the title): different courses that clear each other's
-				     requirement, e.g. Proofs and Ideas for Discrete Mathematics -->
-				{#each swaps as swap (swap.label)}
-					<div class="label">{swap.label}</div>
-					<p class="d-swap-why">{swap.why}</p>
-					<div class="d-chips d-related">
-						{#each swap.codes as code (code)}
-							<button
-								class="d-chip"
-								data-type={plan.courseType(code)}
-								style:--hue={plan.hueOf(code)}
-								onclick={() => jump(code)}
-							>
-								<span>{plan.courseLabel(code)}</span>
-								{#if plan.onBoard(code)}<span class="d-chip-status">on your plan</span>{/if}
-							</button>
-						{/each}
-					</div>
-				{/each}
-
-				<!-- Keep prerequisites visible; related courses can be explored on demand. -->
-				{#if c.prereqs.length}
-					<div class="label">needs first</div>
-					<div class="d-chips d-related">
-						{#each c.prereqs as p (p)}
-							{#if hasCode(p)}
-								{@const status = statusOf(p)}
-								<span class="d-prereq">
-									<button
-										class="d-chip"
-										data-type={plan.courseType(p)}
-										style:--hue={plan.hueOf(p)}
-										data-status={status.kind}
-										title={status.title}
-										onclick={() => jump(p)}
-									>
-										<span>{plan.courseLabel(p)}</span>
-										<span class="d-chip-status">{status.text}</span>
-									</button>
-									<!-- missing: where it would fit, one click to put it there -->
-									{#if status.fits}
-										{@const fits = status.fits}
-										<button
-											class="d-add"
-											title="add {plan.courseLabel(p)} to {spelled(plan, fits.year, fits.trim)}"
-											onclick={() => plan.place(byCode(p).code, fits.year, fits.trim)}
-											>+ {plan.trimName(fits.year, fits.trim)}</button
-										>
-									{/if}
-								</span>
-							{:else}
-								<span class="d-chip" data-status="missing"
-									>{p}<span class="d-chip-status">not in the catalogue</span></span
-								>
-							{/if}
-						{/each}
-					</div>
-				{/if}
-
-				{#if c.unlocks.some(hasCode)}
-					{#key c.code}
-						<details class="d-disclosure">
-							<summary title="Courses that require this one; other prerequisites may also apply"
-								><span>leads to</span><span class="d-count">{c.unlocks.filter(hasCode).length}</span><span
+				{#if plan.onBoard(sid)}
+					{#key sid}
+						<details class="d-disclosure" open={plan.gradeMode || plan.isAudit(sid) || failed}>
+							<summary
+								><span>{plan.gradeMode ? 'grade, audit & result' : 'audit & result'}</span><span
 									class="chev"
 									aria-hidden="true"
 								></span></summary
 							>
 							<div class="d-disclosure-body">
-								<div class="d-chips d-related">
-									{#each c.unlocks.filter(hasCode) as u (u)}
-										<button
-											class="d-chip"
-											data-type={plan.courseType(u)}
-											style:--hue={plan.hueOf(u)}
-											onclick={() => jump(u)}>{plan.courseLabel(u)}</button
-										>
-									{/each}
-								</div>
+								{#if plan.gradeMode}
+									<!-- grade dropdown: letters count toward CGPA, Withdrawn / Incomplete
+					     don't. Hidden while auditing, since an audit carries no grade. -->
+									{#if !plan.isAudit(sid)}
+										<label class="d-grade">
+											<span>grade</span>
+											<select
+												value={plan.gradeOf(sid) ?? ''}
+												onchange={(e) => plan.setGrade(sid, (e.currentTarget.value || null) as GradeMark | null)}
+											>
+												<option value="">not graded</option>
+												{#each OTHER_MARKS as m (m.mark)}
+													<option value={m.mark}>{m.label}</option>
+												{/each}
+												<optgroup label="grade">
+													{#each GRADE_SCALE as g (g.letter)}
+														<option value={g.letter}>{g.letter} · {g.points}</option>
+													{/each}
+												</optgroup>
+											</select>
+										</label>
+									{/if}
+									<!-- audit sits under the grade, taking a course off the CGPA -->
+									{#if canAudit(c.code) && !isAttempt}
+										<label class="d-audit">
+											<input
+												type="checkbox"
+												checked={plan.isAudit(c.code)}
+												onchange={() => {
+													plan.toggleAudit(c.code);
+													if (plan.isAudit(c.code)) plan.setGrade(c.code, null);
+												}}
+											/>
+											<span>audit this course (no credits or grade)</span>
+										</label>
+									{/if}
+								{:else if canAudit(c.code) && !isAttempt}
+									<label class="d-audit">
+										<input type="checkbox" checked={plan.isAudit(c.code)} onchange={() => plan.toggleAudit(c.code)} />
+										<span>audit this course (no credits or grade)</span>
+									</label>
+								{/if}
+
+								<!-- failing, grade view or not: this attempt stays on the grid, faded,
+				     as a record (a U), and the course is free to place again, the copy -->
+								<label class="d-audit" class:off={plan.isAudit(sid)}>
+									<input
+										type="checkbox"
+										checked={failed}
+										disabled={plan.isAudit(sid)}
+										onchange={(e) => plan.setGrade(sid, e.currentTarget.checked ? 'U' : null)}
+									/>
+									<span>mark as failed</span>
+								</label>
+								{#if isAttempt}
+									<p class="d-fail-note">
+										This attempt stays on the grid, faded, as a U. {plan.onBoard(c.code)
+											? 'The copy is on your plan.'
+											: 'Place a copy: pick a trimester above, or drag the course from the catalogue.'}
+									</p>
+								{/if}
+
+								{#if !plan.gradeMode && !canAudit(c.code) && !isAttempt}
+									<!-- drop-form rule: audits are 2/4-credit courses, never KCCS/391/490/491 -->
+									<p class="d-no-audit">this course can't be taken as an audit</p>
+								{/if}
+								{#if !viewport.desktop}
+									<p class="d-no-audit">grades and your CGPA are on a laptop.</p>
+								{/if}
 							</div>
 						</details>
 					{/key}
 				{/if}
-			</section>
-		{/if}
 
-		{#if desc || hasTeachers}
-			<section class="d-section" aria-labelledby="d-sec-about">
-				<h3 class="d-section-title" id="d-sec-about">about the course</h3>
-				{#if desc}
-					{@const long = desc.length > DESC_FOLD}
-					<div class="d-desc">
-						<p class:folded={long && !descOpen}>{desc}</p>
-						{#if long}
-							<button class="d-more" aria-expanded={descOpen} onclick={() => (descOpenFor = descOpen ? null : c.code)}>
-								{descOpen ? 'read less' : 'read more'}
+				<!-- earlier attempts at this course, each opens its own record -->
+				{#if attemptsHere.length}
+					<div class="label">earlier attempts</div>
+					<div class="d-chips">
+						{#each attemptsHere as a (a.id)}
+							<button class="d-chip" onclick={() => plan.select(a.id)}>
+								{termLabel(a.year, a.trim)}<span class="d-chip-status">failed</span>
 							</button>
-						{/if}
+						{/each}
 					</div>
 				{/if}
-
-				<CourseFaculty course={c} />
-				{#if DATA_UPDATED}<p class="catalogue-updated">
-						Catalogue updated {DATA_UPDATED.toLocaleDateString('en-GB', {
-							day: 'numeric',
-							month: 'short',
-							year: 'numeric',
-							timeZone: 'UTC'
-						})}
-					</p>{/if}
 			</section>
+
+			<!-- how it counts is the type tile's job (a cross-listed course's other
+			     role sits under it); this is what stands in for it, and what comes
+			     before and after -->
+			{#if c.prereqs.length || c.unlocks.some(hasCode) || swaps.length}
+				<section class="d-section" aria-labelledby="d-sec-degree">
+					<h3 class="d-section-title" id="d-sec-degree">in your degree</h3>
+
+					<!-- not the same course under another code (that's cross-listing,
+					     under the title): different courses that clear each other's
+					     requirement, e.g. Proofs and Ideas for Discrete Mathematics -->
+					{#each swaps as swap (swap.label)}
+						<div class="label">{swap.label}</div>
+						<p class="d-swap-why">{swap.why}</p>
+						<div class="d-chips d-related">
+							{#each swap.codes as code (code)}
+								<button
+									class="d-chip"
+									data-type={plan.courseType(code)}
+									style:--hue={plan.hueOf(code)}
+									onclick={() => jump(code)}
+								>
+									<span>{plan.courseLabel(code)}</span>
+									{#if plan.onBoard(code)}<span class="d-chip-status">on your plan</span>{/if}
+								</button>
+							{/each}
+						</div>
+					{/each}
+
+					<!-- Keep prerequisites visible; related courses can be explored on demand. -->
+					{#if c.prereqs.length}
+						<div class="label">needs first</div>
+						<div class="d-chips d-related">
+							{#each c.prereqs as p (p)}
+								{#if hasCode(p)}
+									{@const status = statusOf(p)}
+									<span class="d-prereq">
+										<button
+											class="d-chip"
+											data-type={plan.courseType(p)}
+											style:--hue={plan.hueOf(p)}
+											data-status={status.kind}
+											title={status.title}
+											onclick={() => jump(p)}
+										>
+											<span>{plan.courseLabel(p)}</span>
+											<span class="d-chip-status">{status.text}</span>
+										</button>
+										<!-- missing: where it would fit, one click to put it there -->
+										{#if status.fits}
+											{@const fits = status.fits}
+											<button
+												class="d-add"
+												title="add {plan.courseLabel(p)} to {spelled(plan, fits.year, fits.trim)}"
+												onclick={() => plan.place(byCode(p).code, fits.year, fits.trim)}
+												>+ {plan.trimName(fits.year, fits.trim)}</button
+											>
+										{/if}
+									</span>
+								{:else}
+									<span class="d-chip" data-status="missing"
+										>{p}<span class="d-chip-status">not in the catalogue</span></span
+									>
+								{/if}
+							{/each}
+						</div>
+					{/if}
+
+					{#if c.unlocks.some(hasCode)}
+						{#key c.code}
+							<details class="d-disclosure">
+								<summary title="Courses that require this one; other prerequisites may also apply"
+									><span>leads to</span><span class="d-count">{c.unlocks.filter(hasCode).length}</span><span
+										class="chev"
+										aria-hidden="true"
+									></span></summary
+								>
+								<div class="d-disclosure-body">
+									<div class="d-chips d-related">
+										{#each c.unlocks.filter(hasCode) as u (u)}
+											<button
+												class="d-chip"
+												data-type={plan.courseType(u)}
+												style:--hue={plan.hueOf(u)}
+												onclick={() => jump(u)}>{plan.courseLabel(u)}</button
+											>
+										{/each}
+									</div>
+								</div>
+							</details>
+						{/key}
+					{/if}
+				</section>
+			{/if}
+		</div>
+
+		{#if desc || hasTeachers}
+			<section class="d-card" aria-labelledby="d-sec-about">
+				<div class="d-section">
+					<h3 class="d-section-title" id="d-sec-about">about the course</h3>
+					{#if desc}
+						{@const long = desc.length > DESC_FOLD + 60}
+						<p class="d-desc">
+							{long && !descOpen ? clip(desc, DESC_FOLD) : desc}
+							{#if long}
+								<button class="d-more" aria-expanded={descOpen} onclick={() => (descOpenFor = descOpen ? null : c.code)}
+									>{descOpen ? 'less' : 'more'}</button
+								>
+							{/if}
+						</p>
+					{/if}
+				</div>
+
+				{#if hasTeachers}
+					<div class="d-section"><CourseFaculty course={c} /></div>
+				{/if}
+			</section>
+
+			{#if DATA_UPDATED}<p class="catalogue-updated">
+					Catalogue updated {DATA_UPDATED.toLocaleDateString('en-GB', {
+						day: 'numeric',
+						month: 'short',
+						year: 'numeric',
+						timeZone: 'UTC'
+					})}
+				</p>{/if}
 		{/if}
 	</div>
 {:else}
@@ -521,19 +516,7 @@
 		font-size: 1.1rem;
 		color: var(--color-text-muted);
 		line-height: 1.5;
-		margin-top: 1.2rem;
-	}
-
-	.col-header {
-		@include card-header;
-		justify-content: space-between;
-		border-bottom: 1px solid var(--color-border);
-
-		h2 {
-			font-size: 1.8rem;
-			font-weight: 600;
-			color: var(--color-text);
-		}
+		margin: 0;
 	}
 
 	.d-empty {
@@ -581,7 +564,7 @@
 			display: flex;
 			align-items: center;
 			gap: 0.6rem;
-			padding: 0.9rem 0;
+			padding: 0.7rem 0;
 			font-size: 1.2rem;
 			font-weight: 600;
 			color: var(--color-text-muted);
@@ -608,7 +591,7 @@
 			margin-right: 0.4rem;
 		}
 
-		&[open] .chev {
+		&[open]:not(:global([data-closing])) .chev {
 			transform: rotate(45deg);
 		}
 	}
@@ -628,18 +611,6 @@
 		padding: 0.2rem 0 1rem;
 	}
 
-	.d-place-heading {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 0.4rem 0.8rem;
-
-		label {
-			@include section-label;
-		}
-	}
-
 	.d-swap-why {
 		margin: -0.2rem 0 0.6rem;
 		font-size: 1.2rem;
@@ -652,37 +623,22 @@
 		line-height: 1.35;
 	}
 
-	.d-place {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-		padding: 1rem 1.2rem;
-		background: var(--color-bg-light);
-		border: 1px solid var(--color-border-divider);
-		border-radius: 6px;
-	}
-
-	.d-place-where {
-		font-size: 1.1rem;
-		color: var(--color-text-muted);
-	}
-
 	.d-place-row {
 		display: flex;
 		flex-wrap: wrap;
+		align-items: stretch;
 		gap: 0.6rem;
 
 		select {
 			@include flat-select;
-			flex: 1 0 100%;
-			width: 100%;
+			flex: 1 1 14rem;
+			width: auto;
 			font: inherit;
 		}
 	}
 
 	.d-place-go {
-		flex: 1;
-		padding: 0.5rem 1.2rem;
+		padding: 0.4rem 1.2rem;
 		font: inherit;
 		font-size: var(--text-body);
 		font-weight: 600;
@@ -692,25 +648,30 @@
 		border-radius: 4px;
 		cursor: pointer;
 		@include glossy-accent;
-
-		&:disabled {
-			opacity: 0.6;
-			cursor: default;
-		}
 	}
 
+	// taking a course off the plan is a quiet word, not a second button
 	.d-place-remove {
-		padding: 0.5rem 1rem;
+		padding: 0 0.4rem;
 		font: inherit;
 		font-size: var(--text-body);
-		@include store-button;
+		color: var(--color-text-muted);
+		background: none;
+		border: none;
+		cursor: pointer;
+
+		&:hover {
+			color: var(--color-danger);
+			text-decoration: underline;
+			text-underline-offset: 0.2em;
+		}
 	}
 
 	.details {
 		display: flex;
 		flex-direction: column;
-		gap: 0.8rem;
-		padding: var(--panel-gutter);
+		gap: var(--card-gap);
+		padding: var(--card-gap);
 
 		.label {
 			@include section-label;
@@ -718,14 +679,28 @@
 		}
 	}
 
-	// Match the rail: full-width section rules and the same quiet labels.
+	// one card per job: what the course is, what you do with it, what it's
+	// about. the same surface as the sidebar's credit card
+	.d-card {
+		background: var(--color-bg-light);
+		border: 1px solid var(--color-border-card);
+		border-radius: 8px;
+	}
+
 	.d-section {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
-		margin: 0.8rem calc(-1 * var(--panel-gutter)) 0;
-		padding: 1.2rem var(--panel-gutter) 0;
-		border-top: 1px solid var(--color-border-light);
+		gap: 0.8rem;
+		padding: var(--card-pad);
+
+		& + & {
+			border-top: 1px solid var(--color-border-divider);
+		}
+	}
+
+	// a fold at the end of a section already has its own air
+	.d-section:has(> .d-disclosure:last-child) {
+		padding-bottom: 0.3rem;
 	}
 
 	.d-section-title {
@@ -737,7 +712,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
-		padding: 0.4rem 0 0.8rem;
+		padding: var(--card-pad);
 
 		.d-code {
 			font-size: 1.8rem;
@@ -760,10 +735,11 @@
 	.d-meta {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
-		background: var(--color-bg-light);
-		border: 1px solid var(--color-border-card);
-		border-radius: 6px;
-		box-shadow: var(--shadow-inset);
+		border-top: 1px solid var(--color-border-divider);
+	}
+
+	.d-pending {
+		padding: 0 var(--card-pad) var(--card-pad);
 	}
 
 	.d-stat {
@@ -772,9 +748,9 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.3rem;
-		min-height: 5.6rem;
+		min-height: 5rem;
 		min-width: 0;
-		padding: 0.8rem 0.4rem;
+		padding: 0.6rem 0.4rem;
 		background: transparent;
 		border: 0;
 		text-align: center;
@@ -843,10 +819,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.8rem;
-		padding: 1rem 1.2rem;
-		background: var(--color-bg-light);
-		border: 1px solid var(--color-border-divider);
-		border-radius: 6px;
+		padding: 0.8rem var(--card-pad) var(--card-pad);
+		border-top: 1px solid var(--color-border-divider);
 
 		table {
 			width: 100%;
@@ -1023,41 +997,18 @@
 		input {
 			@include tick(1.5rem);
 		}
-	}
 
-	.d-no-audit {
-		@include empty-text;
-	}
-
-	// "failed or not", a pair of radios under the audit tick
-	.d-fail {
-		display: flex;
-		align-items: center;
-		gap: 1.6rem;
-		margin: 0;
-		padding: 0;
-		border: none;
-		font-size: var(--text-body);
-
-		legend {
-			float: left;
-			padding: 0;
-			margin-right: 1.2rem;
-			color: var(--color-text-muted);
-		}
-
-		label {
-			display: flex;
-			align-items: center;
-			gap: 0.6rem;
-			cursor: pointer;
-		}
-
-		&:disabled {
+		&.off {
 			opacity: 0.5;
+			cursor: default;
+
+			input {
+				cursor: default;
+			}
 		}
 	}
 
+	.d-no-audit,
 	.d-fail-note {
 		margin: 0;
 		font-size: 1.2rem;
@@ -1118,22 +1069,43 @@
 			}
 		}
 
+		// the chip's own dark ink, so it reads on the glossy lower half of any
+		// subject's colour; the square is the Hints panel's caution mark
 		&[data-status='missing'] .d-chip-status {
-			color: color-mix(in srgb, var(--color-hint-caution-deep) 65%, var(--color-text));
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			font-weight: 600;
+			color: var(--course-ink);
+
+			&::before {
+				content: '';
+				flex: none;
+				width: 0.7rem;
+				height: 0.7rem;
+				background: var(--color-hint-caution-deep);
+				border-radius: 1px;
+			}
 		}
 	}
 
 	// a prerequisite chip, and beside a missing one, where it would fit
 	.d-prereq {
-		display: inline-flex;
+		display: flex;
 		align-items: stretch;
 		gap: 0.4rem;
-		max-width: 100%;
+		width: 100%;
+
+		.d-chip {
+			flex: 1;
+			min-width: 0;
+		}
 	}
 
 	// dashed like the board's suggested courses: something you could add
 	.d-add {
 		flex: none;
+		min-width: 6.8rem;
 		padding: 0 0.9rem;
 		font: inherit;
 		font-size: 1.2rem;
@@ -1153,31 +1125,22 @@
 	}
 
 	.d-desc {
+		margin: 0;
 		font-size: var(--text-body);
-		line-height: 1.55;
-
-		.folded {
-			display: -webkit-box;
-			-webkit-line-clamp: 5;
-			line-clamp: 5;
-			-webkit-box-orient: vertical;
-			overflow: hidden;
-		}
+		line-height: 1.5;
 	}
-
 	.d-more {
-		margin-top: 0.4rem;
 		padding: 0;
 		font: inherit;
+		font-weight: 600;
 		color: var(--color-accent);
 		background: none;
 		border: 0;
 		cursor: pointer;
-		text-decoration: underline;
-		text-underline-offset: 0.2em;
 
 		&:hover {
-			color: var(--color-text);
+			text-decoration: underline;
+			text-underline-offset: 0.2em;
 		}
 	}
 	// by finger (a tablet's slid-in details too): the close and placing
@@ -1195,12 +1158,13 @@
 			min-height: 4.4rem;
 		}
 		.d-more {
-			padding-top: 1rem;
-			padding-bottom: 1rem;
+			display: block;
+			min-height: 3.2rem;
+			text-align: left;
 		}
 	}
 	@include mobile {
-		.col-header {
+		:global(.col-header) {
 			position: sticky;
 			top: 0;
 			z-index: 2;
@@ -1213,34 +1177,13 @@
 			height: 4.4rem;
 			font-size: 2.6rem;
 		}
-		.details {
-			gap: 1.2rem;
-		}
 		.d-head .d-title {
 			font-size: 2.4rem;
 			line-height: 1.3;
 		}
 		.d-desc,
-		.d-place-where,
 		.d-audit {
 			font-size: 1.5rem;
-		}
-		.d-place-row {
-			flex-wrap: wrap;
-		}
-		.d-place-row select {
-			flex: 1 0 100%;
-			width: 100%;
-		}
-		.d-place-go {
-			flex: 1;
-		}
-		.d-place-remove {
-			padding: 0.8rem 1.6rem;
-		}
-		.d-more {
-			padding-top: 1rem;
-			padding-bottom: 1rem;
 		}
 	}
 </style>

@@ -1,85 +1,147 @@
 <script lang="ts">
-	let { data } = $props();
+	import Panel from '$lib/ui/Panel.svelte';
+	import PanelHeader from '$lib/ui/PanelHeader.svelte';
+	import Toolbar from '$lib/ui/Toolbar.svelte';
+	import Button from '$lib/ui/Button.svelte';
+	import '$lib/site/directory.scss';
+	import type { PageData } from './$types';
+	let { data }: { data: PageData } = $props();
+	let query = $state('');
+	let role = $state('all');
+	const roles = ['all', 'major', 'minor', 'concentration'];
+	const filtered = $derived(
+		data.subjects.filter(
+			(s) =>
+				s.label.toLowerCase().includes(query.trim().toLowerCase()) &&
+				(role === 'all' || s.offers.some((o) => o === role))
+		)
+	);
+	function reset() {
+		query = '';
+		role = 'all';
+	}
 </script>
 
 <svelte:head>
-	<title>Programmes · kcal</title>
+	<title>Programmes · tracker</title>
 	<meta
 		name="description"
-		content="Majors, minors and concentrations at Krea's SIAS: credits, required courses and choices for each."
+		content="Explore majors, minors and concentrations at Krea. Compare credit requirements and find your programme's courses and student representatives."
 	/>
 </svelte:head>
 
-<h1>programmes</h1>
-<p class="lede">
-	What each major, minor and concentration asks for: credits, required courses and the choices you make. These are the
-	rules for the {data.batches}.
-</p>
+<Panel class="directory">
+	<PanelHeader
+		title="programmes"
+		level={1}
+		subtitle="Majors, minors and concentrations · credits, courses and programme requirements."
+		><span class="directory-count">{data.subjects.length} disciplines · {data.batches}</span></PanelHeader
+	>
+	<Toolbar tone="warm" class="directory-controls">
+		<label class="search"
+			>search<input type="search" bind:value={query} placeholder="Try economics, arts, computer science…" /></label
+		>
+		<div class="filters" role="group" aria-label="Programme type">
+			{#each roles as r}<Button variant="pill" aria-pressed={role === r} onclick={() => (role = r)}
+					>{r === 'all' ? 'all' : r}</Button
+				>{/each}
+		</div>
+	</Toolbar>
+	<Toolbar class="result-line">
+		<p role="status">{filtered.length} of {data.subjects.length} disciplines</p>
+		<span>Credit previews · 4-year pathway</span>
+	</Toolbar>
+	<ul class="cards">
+		{#each filtered as s (s.slug)}
+			<li style:--hue={s.hue ?? 300}>
+				<a class="programme" href="/programmes/{s.slug}">
+					<div class="card-top"><span class="course-count">{s.courses} courses</span></div>
+					<h2>{s.label}</h2>
 
-<ul class="subjects">
-	{#each data.subjects as s (s.slug)}
-		<li style:--hue={s.hue}>
-			<a href="/programmes/{s.slug}">
-				<span class="name">{s.label}</span>
-				<span class="offers">{s.offers.join(' · ')}</span>
-				<span class="count">{s.courses} courses</span>
-			</a>
-		</li>
-	{/each}
-</ul>
+					<dl>
+						{#each s.offers as offer}<div>
+								<dt>{offer}</dt>
+								<dd>{s.credits[offer]} <span>cr</span></dd>
+							</div>{/each}
+					</dl>
+					<p class="card-foot">Explore requirements <span aria-hidden="true">↗</span></p>
+				</a>
+			</li>
+		{/each}
+	</ul>
+	{#if !filtered.length}<div class="empty">
+			<h2>No programmes found</h2>
+			<p>Try another subject or programme type.</p>
+			<Button variant="quiet" class="reset" onclick={reset}>clear filters</Button>
+		</div>{/if}
+	<p class="footnote">
+		Credits shown are for a single major, minor or concentration on the 4-year pathway. Open a programme for 3-year and
+		double-major requirements, course choices and student reps. Applies to the {data.batches}.
+	</p>
+</Panel>
 
 <style lang="scss">
-	h1 {
-		font-size: 3.2rem;
-		letter-spacing: -0.02em;
-	}
-
-	.lede {
-		max-width: 62ch;
-		margin-top: 0.6rem;
-		font-size: 1.6rem;
-		line-height: 1.5;
-		color: var(--color-text-muted);
-	}
-
-	.subjects {
-		list-style: none;
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
-		gap: 1.2rem;
-		margin-top: 3.2rem;
-	}
-
-	a {
-		display: grid;
-		gap: 0.4rem;
+	@use '$lib/styles/mixins' as *;
+	.programme {
+		display: flex;
+		flex-direction: column;
 		height: 100%;
-		padding: 1.6rem 1.8rem;
+		padding: 1rem 1.2rem;
 		color: var(--color-text);
 		text-decoration: none;
-		background: oklch(0.96 0.02 var(--hue, 300));
-		border: 1px solid oklch(0.84 0.05 var(--hue, 300));
-		border-left-width: 4px;
-		border-radius: 6px;
-		box-shadow: var(--shadow-card);
-		transition:
-			transform 0.15s var(--spring),
-			box-shadow 0.15s ease;
-
-		&:hover {
-			transform: translateY(-2px);
-			box-shadow: var(--shadow-card-hover);
-		}
+		background: color-mix(in srgb, oklch(0.8 0.06 var(--hue)) 30%, var(--color-bg-light));
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		border-left: 4px solid oklch(0.65 0.09 var(--hue));
 	}
-
-	.name {
-		font-size: 1.8rem;
-		font-weight: 700;
+	.programme:hover {
+		background: color-mix(in srgb, oklch(0.8 0.06 var(--hue)) 42%, var(--color-bg-light));
 	}
-
-	.offers,
-	.count {
-		font-size: 1.3rem;
+	.card-top {
+		order: 2;
+		margin-top: 0.5rem;
+	}
+	.course-count {
+		font-size: 1.15rem;
 		color: var(--color-text-muted);
+	}
+	h2 {
+		font-size: 1.4rem;
+		font-weight: 600;
+	}
+	dl {
+		order: 3;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem 1rem;
+		margin: 0.8rem 0;
+	}
+	dl > div {
+		display: flex;
+		align-items: baseline;
+		gap: 0.6rem;
+	}
+	dt {
+		font-size: 1.1rem;
+		color: var(--color-text-muted);
+	}
+	dd {
+		font-size: 1.4rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+	dd span {
+		font-size: 1.05rem;
+		font-weight: 400;
+		color: var(--color-text-muted);
+	}
+	.card-foot {
+		order: 4;
+		display: flex;
+		justify-content: space-between;
+		margin-top: auto;
+		padding-top: 0.8rem;
+		font-size: 1.1rem;
+		border-top: 1px dotted var(--color-border-card);
 	}
 </style>

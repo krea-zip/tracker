@@ -1,5 +1,6 @@
 <script lang="ts">
-	// Course labels and the colour legend share one display disclosure.
+	// The colour legend, under the board bar's display key. Course labels sit
+	// on the bar itself; only the welcome's opened-out copy (inline) repeats them.
 	// Hovering a legend row previews its courses; clicking pins the highlight.
 	import { fade, scale } from 'svelte/transition';
 	import { backOut } from 'svelte/easing';
@@ -8,7 +9,6 @@
 	import { reducedMotion } from '$lib/ui/transitions';
 	import Keys from './Keys.svelte';
 	import LabelKeys from './LabelKeys.svelte';
-	import { viewport } from '$lib/planner/viewport.svelte';
 	import { slotOrder } from '$lib/planner/calendar';
 	import { armed } from '$lib/planner/board/grid/armed.svelte';
 
@@ -185,7 +185,7 @@
 			in:scale={{ start: 0.94, duration: reducedMotion() ? 0 : 260, easing: backOut }}
 			out:fade={{ duration: reducedMotion() ? 0 : 100 }}
 		>
-			{#if inline || viewport.desktop}
+			{#if inline}
 				<div class="labels">
 					<p class="section-label">course labels</p>
 					<LabelKeys />

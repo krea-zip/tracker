@@ -1,8 +1,8 @@
-# gridmap
+# tracker
 
-Plan your whole degree at Krea University, one trimester at a time. Pick your batch and programmes, drag courses onto the grid, and gridmap tracks your credits and checks the plan as you build it.
+Plan your whole degree at Krea University, one trimester at a time. Pick your batch and programmes, drag courses onto the grid, and tracker tracks your credits and checks the plan as you build it.
 
-**[Open gridmap ↗](https://kcal-delta.vercel.app)**
+**[Open tracker ↗](https://kcal-delta.vercel.app)**
 
 ## To do
 
@@ -19,7 +19,6 @@ Plan your whole degree at Krea University, one trimester at a time. Pick your ba
 
 ### Medium priority
 
-- [ ] Rename kcal to gridmap in the app and docs, keeping the `kcal-` storage keys so saved plans survive
 - [ ] Load rarely used parts on demand: welcome, settings, grades, what-if, credit rules
 - [ ] Fetch course descriptions when a course is first opened, not for everyone
 - [ ] Keep shrinking `plan.svelte.ts` (1,581 lines): what-if and breaks are next
@@ -52,5 +51,5 @@ git log --all --full-history -- "**/welcome/Demo.svelte"
 ### Add an icon
 
 1. Draw it on a 16×16 grid as an SVG path made of whole-pixel rectangles
-2. Add the path to `paths` in `src/lib/components/PixelIcon.svelte`, and its name to the `name` prop's type
+2. Add the path to `paths` in `src/lib/ui/PixelIcon.svelte`, and its name to the `name` prop's type
 3. Use it: `<PixelIcon name="gear" size="1.6rem" snap />`

@@ -8,9 +8,9 @@
 import type { Programme } from '$lib/types';
 
 /** degrees two programmes' hues must be apart to read as different */
-export const MIN_GAP = 40;
+const MIN_GAP = 40;
 // the palette's own arc (115° to 340°): past it lie the yellows that read
-// as khaki at kcal's chip lightness, and the KCCS blush
+// as khaki at tracker's chip lightness, and the KCCS blush
 const ARC = [112, 345];
 
 const gap = (a: number, b: number) => {

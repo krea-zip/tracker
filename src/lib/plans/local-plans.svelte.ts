@@ -13,11 +13,11 @@
 
 import { browser } from '$app/environment';
 
-const SAVES_KEY = 'kcal-saved-plans';
+const SAVES_KEY = 'tracker-saved-plans';
 // A snapshot is a whole plan (~10-30 KB of JSON). localStorage is a few MB, so
 // this is nowhere near the ceiling, it is a list-length limit, to keep the
 // settings panel readable and stop an accidental save loop filling the quota.
-export const MAX_SAVES = 20;
+const MAX_SAVES = 20;
 
 export type SavedPlan = {
 	id: string;
@@ -96,11 +96,6 @@ class SavedPlans {
 	update(id: string, data: unknown) {
 		const copy: unknown = JSON.parse(JSON.stringify(data));
 		this.items = this.items.map((p) => (p.id === id ? { ...p, data: copy, savedAt: Date.now() } : p));
-		this.#write();
-	}
-
-	rename(id: string, name: string) {
-		this.items = this.items.map((p) => (p.id === id ? { ...p, name: name.trim() || p.name } : p));
 		this.#write();
 	}
 

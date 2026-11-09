@@ -1,6 +1,7 @@
 <script lang="ts">
+	import Button from '$lib/ui/Button.svelte';
 	import { usePlan } from '$lib/planner/context';
-	import { settings, TEXT_SIZES, type ThemeChoice } from '$lib/ui/settings.svelte';
+	import Appearance from '$lib/ui/Appearance.svelte';
 	import { savedPlans } from '$lib/plans/local-plans.svelte';
 	// google sign-in is off for now; bring this and the panel below back to turn it on
 	// import AccountPanel from '$lib/plans/AccountPanel.svelte';
@@ -12,12 +13,6 @@
 
 	let { onclose }: { onclose: () => void } = $props();
 	const plan = usePlan();
-
-	const THEMES: { id: ThemeChoice; label: string }[] = [
-		{ id: 'light', label: 'light' },
-		{ id: 'dark', label: 'dark' },
-		{ id: 'system', label: 'auto' }
-	];
 
 	// loading replaces what is on the board, so it asks twice, same guard as
 	// "start over", for the same reason
@@ -118,27 +113,7 @@
 	<section>
 		<h3>appearance</h3>
 
-		<div class="row">
-			<span class="row-label">theme</span>
-			<div class="seg" role="group" aria-label="theme">
-				{#each THEMES as t (t.id)}
-					<button class:active={settings.theme === t.id} onclick={() => settings.setTheme(t.id)}>
-						{t.label}
-					</button>
-				{/each}
-			</div>
-		</div>
-
-		<div class="row">
-			<span class="row-label">text size</span>
-			<div class="seg" role="group" aria-label="text size">
-				{#each TEXT_SIZES as s (s.id)}
-					<button class:active={settings.textSize === s.id} onclick={() => settings.setTextSize(s.id)}>
-						{s.label}
-					</button>
-				{/each}
-			</div>
-		</div>
+		<Appearance />
 	</section>
 
 	<section>
@@ -184,11 +159,11 @@
 			Export your current draft without signing in. PDFs and copied text exclude your grades and email.
 		</p>
 		<div class="actions">
-			<button onclick={exportPdf}>save as PDF</button>
-			<button onclick={copyPlan}>{shared ? 'copied ✓' : 'copy plan as text'}</button>
-			<button class="danger" onclick={startOver}>
+			<Button onclick={exportPdf}>save as PDF</Button>
+			<Button onclick={copyPlan}>{shared ? 'copied ✓' : 'copy plan as text'}</Button>
+			<Button variant="danger" onclick={startOver}>
 				{confirming ? 'really start over?' : 'start over'}
-			</button>
+			</Button>
 		</div>
 		{#if exportError}<p class="note warn" role="alert">{exportError}</p>{/if}
 	</section>
@@ -260,26 +235,6 @@
 		color: var(--color-danger);
 	}
 
-	.row {
-		display: grid;
-		grid-template-columns: 8rem 1fr;
-		align-items: center;
-		gap: 1rem;
-
-		& + .row {
-			margin-top: 1rem;
-		}
-	}
-
-	.row-label {
-		font-size: 1.35rem;
-		color: var(--color-text);
-	}
-
-	.seg {
-		@include segmented;
-	}
-
 	.note {
 		margin-top: 0.8rem;
 		font-size: 1.2rem;
@@ -301,33 +256,5 @@
 		flex-wrap: wrap;
 		gap: 0.8rem;
 		margin-top: 1rem;
-
-		button {
-			display: inline-flex;
-			align-items: center;
-			gap: 0.6rem;
-			padding: 0.7rem 1.6rem;
-			font-size: 1.3rem;
-			font-weight: 600;
-			color: var(--color-text);
-			background-color: var(--color-bg-light);
-			border: 1px solid var(--color-border-card);
-			border-radius: 5px;
-			cursor: pointer;
-			@include glossy;
-
-			&:disabled {
-				opacity: 0.6;
-				cursor: not-allowed;
-			}
-
-			// destructive, so it's the one button wearing the danger colour
-			&.danger {
-				color: var(--color-on-accent);
-				background-color: var(--color-danger);
-				border-color: var(--color-danger-deep);
-				@include glossy-accent;
-			}
-		}
 	}
 </style>

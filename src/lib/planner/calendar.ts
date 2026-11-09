@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────
 // Where a student is in their degree today: "you are here", the line between
-// what they've already taken and what they can still plan. kcal guesses it
+// what they've already taken and what they can still plan. tracker guesses it
 // from the batch and the date; the student can always correct it.
 // ─────────────────────────────────────────────
 
@@ -12,7 +12,7 @@ export type Here = { year: number; trim: TrimNum };
  * Krea's academic year starts in August. Its trimesters are taken to run
  * August–October, November–January and February–April (May–July, the
  * summer, still counts as T3 just done). Not the published calendar, which
- * isn't in kcal's data, so the guess is only ever a default; TERM_MONTHS
+ * isn't in tracker's data, so the guess is only ever a default; TERM_MONTHS
  * below is the same assumption, written out for the grid's header.
  */
 export function guessNow(batchStartYear: number, today: Date, lastYear: number): Here {
@@ -47,9 +47,9 @@ export const academicYear = (batchStartYear: number, year: number): string => {
 };
 
 /** The months each trimester is taken to run, the same assumption guessNow
- *  makes. Krea's published calendar isn't in kcal's data, so this (and the
+ *  makes. Krea's published calendar isn't in tracker's data, so this (and the
  *  month test in guessNow) is the place to fix. */
-export const TERM_MONTHS: Record<TrimNum, [string, string]> = {
+const TERM_MONTHS: Record<TrimNum, [string, string]> = {
 	1: ['aug', 'oct'],
 	2: ['nov', 'jan'],
 	3: ['feb', 'apr']
