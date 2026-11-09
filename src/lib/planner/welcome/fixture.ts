@@ -1,13 +1,16 @@
 // A complete, fictional curriculum for the isolated welcome frame. It goes
 // through the same indexes, rules and components as the published curriculum,
 // so every panel in the playground is the real one, reading pretend courses.
-import type { ChoiceGroup, CurriculumSnapshot, ProgrammeRequirements, SnapshotCourse } from '$lib/curriculum/snapshot';
+// The degree is Jeff's at Greendale: every course is named after an episode
+// of Community, and the codes are numbered clear of the real catalogue's.
+import type { CurriculumSnapshot, ProgrammeRequirements, SnapshotCourse } from '$lib/curriculum/snapshot';
 import type { TrimNum } from '$lib/types';
 
 const TEACHERS: Record<string, { id: string; name: string }> = {
-	dreams: { id: 'cloud', name: 'Professor Cloud' },
-	cats: { id: 'whiskers', name: 'Dr. Whiskers' },
-	clouds: { id: 'cloud', name: 'Professor Cloud' }
+	film: { id: 'pelton', name: 'Dean Pelton' },
+	anth: { id: 'duncan', name: 'Professor Duncan' },
+	span: { id: 'chang', name: 'Señor Chang' },
+	stat: { id: 'slater', name: 'Professor Slater' }
 };
 
 function course(
@@ -39,40 +42,43 @@ function course(
 }
 
 const courses = [
-	course('KCCS101', 'Introduction to daydreaming', 'core', [1, 2]),
-	course('KCCS102', 'The art of asking why', 'core', [1, 2]),
-	course('NAP101', 'Pillow foundations', 'dreams', [1, 2, 3]),
-	course('NAP201', 'Advanced napping', 'dreams', [1, 2], ['NAP101']),
-	course('NAP301', 'Professional snoozing', 'dreams', [3], ['NAP201']),
-	course('TEA202', 'Tea leaf theory', 'dreams', [2, 3], [], false),
-	course('CAT101', 'Thinking like a cat', 'cats', [1, 2, 3]),
-	course('CAT201', 'Cardboard architecture', 'cats', [2, 3], ['CAT101'], false),
-	course('CAT205', 'Advanced purring', 'cats', [2, 3], ['CAT101'], false),
-	course('MOON101', 'Moon gardening', 'clouds', [3], [], false)
+	course('KCCS111', 'Communication Studies', 'core', [1, 2]),
+	course('KCCS112', 'Social Psychology', 'core', [1, 2]),
+	course('KCCS113', 'Environmental Science', 'core', [1, 2]),
+	course('KCCS114', 'Interpretive Dance', 'core', [1, 2]),
+	course('FILM101', 'Introduction to Film', 'film', [1, 2, 3]),
+	course('FILM201', 'Intermediate Documentary Filmmaking', 'film', [1, 2], ['FILM101']),
+	course('FILM301', 'Critical Film Studies', 'film', [1, 3], ['FILM201']),
+	course('FILM150', 'Messianic Myths and Ancient Peoples', 'film', [1, 3], [], false),
+	course('FILM210', 'Intro to Recycled Cinema', 'film', [2, 3], [], false),
+	course('ANTH101', 'Anthropology 101', 'anth', [1, 2, 3]),
+	course('ANTH201', 'Applied Anthropology and Culinary Arts', 'anth', [2, 3], ['ANTH101']),
+	course('ANTH205', 'Origins of Vampire Mythology', 'anth', [1, 2], ['ANTH101']),
+	course('ANTH210', 'Comparative Religion', 'anth', [2, 3], ['ANTH101'], false),
+	course('SPAN101', 'Spanish 101', 'span', [3], [], false),
+	course('STAT101', 'Introduction to Statistics', 'stat', [1, 2, 3], [], false)
 ];
 
-const titleOf = (code: string) => courses.find((c) => c.code === code)?.title ?? code;
-
+// every programme here is fixed courses only, no "pick any two" pools, so
+// what's left to do is always a course the student can name
 function programme(
 	subject: string,
 	variant: ProgrammeRequirements['variant'],
 	required: string[],
-	electives: string[],
-	choices: ChoiceGroup[] = []
+	electives: string[]
 ): ProgrammeRequirements {
-	const picked = choices.reduce((sum, group) => sum + group.pick, 0);
 	return {
 		subject,
 		variant,
 		credits: {
-			total: (required.length + picked + electives.length) * 4,
-			required: (required.length + picked) * 4,
+			total: (required.length + electives.length) * 4,
+			required: required.length * 4,
 			elective: electives.length * 4
 		},
 		required,
 		electives,
-		picks: choices.flatMap((group) => group.courses.flatMap((c) => (c.code ? [c.code] : []))),
-		choices,
+		picks: [],
+		choices: [],
 		pathway: []
 	};
 }
@@ -83,9 +89,10 @@ export const playgroundSnapshot: CurriculumSnapshot & { descriptions: Record<str
 	updatedOn: null,
 	subjects: [
 		{ id: 'core', label: 'kccs', short: 'kccs', majorable: false },
-		{ id: 'dreams', label: 'dream studies', short: 'dreams', majorable: true, hue: 210 },
-		{ id: 'cats', label: 'cat philosophy', short: 'cats', majorable: true, hue: 285 },
-		{ id: 'clouds', label: 'cloud sciences', short: 'clouds', majorable: true, hue: 150 },
+		{ id: 'film', label: 'film studies', short: 'film', majorable: true, hue: 210 },
+		{ id: 'anth', label: 'anthropology', short: 'anth', majorable: true, hue: 285 },
+		{ id: 'span', label: 'spanish', short: 'span', majorable: true, hue: 150 },
+		{ id: 'stat', label: 'statistics', short: 'stat', majorable: true, hue: 60 },
 		{ id: 'open', label: 'open minor', short: 'open', majorable: false }
 	],
 	rules: {
@@ -95,28 +102,48 @@ export const playgroundSnapshot: CurriculumSnapshot & { descriptions: Record<str
 		TRIM_HARD_MAX: 20,
 		HEAVY_TRIMS_ALLOWED: 2,
 		AUDIT_LIMIT: 2,
-		MIN_TOTAL_3YR: 36,
-		MIN_TOTAL_4YR: 36,
-		MAX_TOTAL_3YR: 48,
-		MAX_TOTAL_4YR: 48
+		// kccs and the two programmes ask for 48; two free courses (Spanish
+		// and statistics) make up the rest, so a finished plan lands on it exactly
+		MIN_TOTAL_3YR: 56,
+		MIN_TOTAL_4YR: 56,
+		MAX_TOTAL_3YR: 64,
+		MAX_TOTAL_4YR: 64
 	},
 	courses,
 	lecturers: [
 		{
-			id: 'cloud',
-			name: 'Professor Cloud',
-			position: 'Professor of imaginary studies',
-			email: 'cloud@example.invalid',
-			office_hours: 'After the afternoon nap · Cloud Room 2',
+			id: 'pelton',
+			name: 'Dean Pelton',
+			position: 'Dean of Greendale, and film when he can',
+			email: 'dean@example.invalid',
+			office_hours: 'Any theme day · The dean’s office',
 			image_url: '',
 			url: ''
 		},
 		{
-			id: 'whiskers',
-			name: 'Dr. Whiskers',
-			position: 'Reader in feline thought',
-			email: 'whiskers@example.invalid',
-			office_hours: 'Whenever the door is left open · Box 3',
+			id: 'duncan',
+			name: 'Professor Duncan',
+			position: 'Professor of anthropology',
+			email: 'duncan@example.invalid',
+			office_hours: 'Mondays · Study room F',
+			image_url: '',
+			url: ''
+		},
+		{
+			id: 'chang',
+			name: 'Señor Chang',
+			position: 'Profesor de español',
+			email: 'chang@example.invalid',
+			office_hours: 'Unpredictable · Room 101',
+			image_url: '',
+			url: ''
+		},
+		{
+			id: 'slater',
+			name: 'Professor Slater',
+			position: 'Professor of statistics',
+			email: 'slater@example.invalid',
+			office_hours: 'Tuesdays after class · Room 307',
 			image_url: '',
 			url: ''
 		}
@@ -129,42 +156,32 @@ export const playgroundSnapshot: CurriculumSnapshot & { descriptions: Record<str
 			name: 'Pretend degree',
 			batches: null,
 			programmes: [
-				programme('dreams', 'single_major_4yr', ['NAP101', 'NAP201', 'NAP301'], ['TEA202']),
+				programme('film', 'single_major_4yr', ['FILM101', 'FILM201', 'FILM301'], ['FILM150', 'FILM210']),
 				// the other majors, so a course card and what-if have something true to say
-				programme('cats', 'single_major_4yr', ['CAT101', 'CAT201', 'CAT205'], []),
-				programme('clouds', 'single_major_4yr', ['MOON101'], []),
-				programme(
-					'cats',
-					'minor_4yr',
-					['CAT101'],
-					[],
-					[
-						{
-							rule: 'Any one of the following courses',
-							pick: 1,
-							courses: ['CAT201', 'CAT205'].map((code) => ({ code, title: titleOf(code) }))
-						}
-					]
-				)
+				programme('anth', 'single_major_4yr', ['ANTH101', 'ANTH201', 'ANTH205', 'ANTH210'], []),
+				programme('span', 'single_major_4yr', ['SPAN101'], []),
+				programme('stat', 'single_major_4yr', ['STAT101'], []),
+				programme('anth', 'minor_4yr', ['ANTH101', 'ANTH201', 'ANTH205'], [])
 			]
 		}
 	],
 	descriptions: Object.fromEntries(
 		courses.map((c) => [
 			c.code,
-			`${c.title} explores the wonderfully imaginary world of ${c.subject === 'cats' ? 'cats and cardboard boxes' : 'dreams, tea and clouds'}. Practise asking questions, making discoveries and taking excellent notes. This is a fictional course created for the welcome playground. Its credits, offerings, prerequisites and teacher are examples only. In your real plan, this section contains the catalogue description of the course you selected.`
+			`${c.title} is a pretend course at Greendale, named after an episode of Community. Its credits, offerings, prerequisites and teacher are examples only. In your real plan, this section has the catalogue description of the course you opened.`
 		])
 	)
 };
 
-// the plan the playground opens on, with things left to do on purpose: NAP301
-// sits before its prerequisite in a trimester it doesn't run in, y2 t3 is
-// light, and the minor's "pick one" is still open. the lessons fix all of it.
+// Jeff's plan as the practice opens on it: one thing wrong that the grid
+// shows (Spanish 101 sits in a trimester it doesn't run in), and one course
+// his major still needs (Critical Film Studies, not on the grid yet). Put
+// right, it lands on the degree minimum exactly.
 export const playgroundPlacements = (): Record<string, string[]> => ({
-	'1-1': ['KCCS101'],
-	'1-2': ['KCCS102'],
-	'1-3': ['NAP101'],
-	'2-1': ['NAP301', 'CAT101'],
-	'2-2': ['NAP201', 'TEA202'],
-	'2-3': ['MOON101']
+	'1-1': ['KCCS111', 'KCCS112'],
+	'1-2': ['KCCS113', 'KCCS114'],
+	'1-3': ['FILM101', 'ANTH101'],
+	'2-1': ['SPAN101', 'FILM150', 'ANTH205'],
+	'2-2': ['FILM201', 'FILM210', 'ANTH201'],
+	'2-3': ['STAT101']
 });

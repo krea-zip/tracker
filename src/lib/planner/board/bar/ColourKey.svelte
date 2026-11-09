@@ -1,18 +1,16 @@
 <script lang="ts">
-	// The colour legend, under the board bar's display key. Course labels sit
-	// on the bar itself; only the welcome's opened-out copy (inline) repeats them.
-	// Hovering a legend row previews its courses; clicking pins the highlight.
+	// The colour legend, under the board bar's select key. Course labels sit
+	// on the bar itself. Hovering a legend row previews its courses; clicking
+	// pins the highlight.
 	import { fade, scale } from 'svelte/transition';
 	import { backOut } from 'svelte/easing';
 	import { subjectById } from '$lib/curriculum/data';
 	import { usePlan } from '$lib/planner/context';
 	import { reducedMotion } from '$lib/ui/transitions';
 	import Keys from './Keys.svelte';
-	import LabelKeys from './LabelKeys.svelte';
 	import { slotOrder } from '$lib/planner/calendar';
 	import { armed } from '$lib/planner/board/grid/armed.svelte';
 
-	let { inline = false }: { inline?: boolean } = $props();
 	const plan = usePlan();
 
 	const TYPE_KEYS = [
@@ -123,7 +121,7 @@
 	}
 
 	// the guide shows the key open: the colours are the first thing worth knowing
-	$effect(() => setOpen(inline || plan.guiding));
+	$effect(() => setOpen(plan.guiding));
 
 	const toggle = (id: string) => (picked = picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id]);
 
@@ -136,7 +134,7 @@
 
 <svelte:window
 	onpointerdown={(e) => {
-		if (!inline && open && !root.contains(e.target as Node)) setOpen(false);
+		if (open && !root.contains(e.target as Node)) setOpen(false);
 	}}
 />
 
@@ -144,7 +142,6 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	class="colour-key"
-	class:inline
 	role="group"
 	aria-label="display options"
 	bind:this={root}
@@ -163,7 +160,7 @@
 			class:active={open}
 			aria-expanded={open}
 			aria-controls="colour-key"
-			onclick={() => !inline && setOpen(!open)}
+			onclick={() => setOpen(!open)}
 		>
 			<!-- just the essentials on its face: a square per subject, then
 			     required and elective; kccs and other dept. wait inside -->
@@ -175,7 +172,7 @@
 				</span>
 			{/if}
 			<span class="swatches" aria-hidden="true"><i data-type="required"></i><i data-type="elective"></i></span>
-			display <span class="caret" aria-hidden="true">▾</span>
+			select <span class="caret" aria-hidden="true">▾</span>
 		</button>
 	</Keys>
 	{#if open}
@@ -185,12 +182,6 @@
 			in:scale={{ start: 0.94, duration: reducedMotion() ? 0 : 260, easing: backOut }}
 			out:fade={{ duration: reducedMotion() ? 0 : 100 }}
 		>
-			{#if inline}
-				<div class="labels">
-					<p class="section-label">course labels</p>
-					<LabelKeys />
-				</div>
-			{/if}
 			<p class="section-label">colours</p>
 			<ul class="legend" aria-label="course colour legend">
 				{#each TYPE_KEYS as k (k.type)}
@@ -305,24 +296,6 @@
 		}
 	}
 
-	.inline > :global(.keys) {
-		display: none;
-	}
-
-	.inline .pop {
-		position: relative;
-		top: auto;
-		left: auto;
-		right: auto;
-		width: 100%;
-		max-width: none;
-		max-height: none;
-		padding: 0;
-		background: none;
-		border: 0;
-		box-shadow: none;
-	}
-
 	.pop {
 		position: absolute;
 		top: calc(100% + 0.6rem);
@@ -338,22 +311,6 @@
 		border-radius: 6px;
 		box-shadow: 0 6px 18px rgba(20, 30, 50, 0.18);
 		transform-origin: top left;
-	}
-
-	.labels {
-		padding: 0 0.6rem 1.2rem;
-		margin-bottom: 0.4rem;
-		border-bottom: 1px solid var(--bar-edge);
-
-		.section-label {
-			padding-left: 0;
-		}
-
-		// the segments share the menu's width, so no empty end is left over
-		:global(button) {
-			flex: 1;
-			justify-content: center;
-		}
 	}
 
 	.section-label {

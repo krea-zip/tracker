@@ -1,20 +1,32 @@
-// One entry per playground slide: what it says beside the miniature, what to
-// try, and how the frame can tell it was tried. Everything acts on the same
-// pretend plan, so what a student does on one slide is still there on the next.
+// The practice is one small story: Jeff's plan at Greendale, put right one
+// part of the planner at a time, in the order a student meets them: the
+// grid, the catalogue, a course's card, the hints, then all of it at once.
+// Every quest has a reason the student can see (this course doesn't run
+// then, his major is a course short, could this one go sooner?), only one
+// thing is ever wrong at a time, and each step leaves the plan the way the
+// next one needs it.
 import type { Plan } from '$lib/planner/plan.svelte';
 
-/** where a lesson's part sits in the real planner */
-export type MapPart = 'grid' | 'bar' | 'catalogue' | 'info' | 'hints' | 'details' | 'all';
+/** what the frame shows beside the grid on a step */
+export type Layout = {
+	/** the sidebar's sections, in the sidebar's own order */
+	rail?: ('progress' | 'hints')[];
+	catalogue?: boolean;
+	/** the course card sits beside the grid instead of sliding over it */
+	dock?: boolean;
+};
 
-/** the plan as it stood when a slide was first opened */
+/** the plan as it stood when a step was first opened */
 export type Baseline = { at: Record<string, string> };
 
 export type Task = {
 	id: string;
-	/** what to try; *words between stars* come out bold */
-	text: string;
-	/** what to ring in the miniature while this is the task at hand */
-	point?: string;
+	/** the quest, in two or three words */
+	title: string;
+	/** why, then how, shown while it's the quest at hand; *words between stars* come out bold */
+	how: string;
+	/** what to ring in the miniature while this is the task at hand: the first of these on screen */
+	point?: string | string[];
 	/** or the gesture to draw: a course flying from one place to another */
 	drag?: { from: string; to: string; label: string };
 	/** done once this holds… */
@@ -27,14 +39,15 @@ export type Task = {
 
 export type LessonInfo = {
 	id: string;
-	title: string;
+	/** its name on the step track */
 	label: string;
+	title: string;
 	intro: string;
 	tasks: Task[];
-	/** how this part works with the others */
-	links: string[];
-	map: MapPart;
-	/** set the pretend plan up for this slide, the first time it opens */
+	/** said once every quest is done: a cheer, then one thing worth knowing */
+	praise: string;
+	layout: Layout;
+	/** set the pretend plan up for this step, the first time it opens */
 	enter?: (plan: Plan) => void;
 };
 
@@ -43,233 +56,131 @@ export const slotsOf = (plan: Plan): Baseline['at'] =>
 
 const chip = (code: string) => `.chip[data-code="${code}"]`;
 const cell = (year: number, trim: number) => `.cell[data-year="${year}"][data-trim="${trim}"]`;
-const UNDO = '[aria-label="undo"]';
 
-const moved = (plan: Plan, from: Baseline) =>
-	plan.placed.some((p) => from.at[p.code] && from.at[p.code] !== `${p.year}-${p.trim}`);
-const undone = (plan: Plan) => plan.flash === 'undone';
-const count = (plan: Plan, kind: 'warn' | 'caution') => plan.hints.filter((h) => h.kind === kind).length;
+const flagged = (plan: Plan, code: string) => plan.hints.some((h) => h.kind === 'warn' && h.codes.includes(code));
+/** nothing in the hints list: no ▲ problem and no ■ warning */
+const clear = (plan: Plan) => !plan.hints.some((h) => h.kind === 'warn' || h.kind === 'caution');
+/** every programme full, and the degree's credits all planned */
+const complete = (plan: Plan) =>
+	plan.stats.every((s) => s.creditsLeft === 0) && plan.totalPlacedCredits >= plan.creditMinimum;
 
 const LESSON_LIST = [
 	{
-		id: 'terms',
-		title: 'a tiny planner to play with',
-		label: 'the playground',
-		intro: 'just a demo: two years, three trimesters each, and pretend courses. nothing here changes your plan.',
+		id: 'grid',
+		label: 'grid',
+		title: 'the grid',
+		intro: 'this is Jeff’s plan at Greendale. each row is a year, each column a trimester, each box a course.',
+		layout: {},
 		tasks: [
 			{
-				id: 'terms-move',
-				text: 'drag *TEA202* to another trimester. mint cells are where it fits.',
-				drag: { from: chip('TEA202'), to: cell(2, 3), label: 'TEA202' },
-				done: moved
-			},
-			{
-				id: 'terms-undo',
-				text: 'changed your mind? press *↶* in the bar, or ctrl+z.',
-				point: UNDO,
-				done: undone
-			},
-			{
-				id: 'terms-open',
-				text: 'click the empty part of a trimester to open it, then *← back*.',
-				point: cell(2, 3),
-				done: (plan) => plan.zoom !== null
+				id: 'grid-move',
+				title: 'move Spanish 101',
+				how: 'it only runs in t3, so it has a ▲. drag *SPAN101* to a t3: the cells that turn mint are where it can go.',
+				drag: { from: chip('SPAN101'), to: cell(2, 3), label: 'SPAN101' },
+				done: (plan) => !flagged(plan, 'SPAN101')
 			}
 		],
-		links: [
-			'y1 t1 and t2 only take kccs, the foundation courses everyone does.',
-			'a faded cell still takes a drop. the hints will flag it for you.'
-		],
-		map: 'grid'
-	},
-	{
-		id: 'display',
-		title: 'make the grid yours',
-		label: 'display',
-		intro: 'the grid’s bar changes what the boxes say, and its display menu explains what their colours mean.',
-		tasks: [
-			{
-				id: 'display-titles',
-				text: 'turn on *titles* to read course names in the boxes.',
-				point: '[aria-label="course labels"] button:nth-child(2)',
-				done: (plan) => plan.showTitles
-			},
-			{
-				id: 'display-hover',
-				text: 'point at a colour. everything else on the grid steps back.',
-				point: '.legend[aria-label="course colour legend"]',
-				done: (plan) => plan.highlight.length > 0
-			},
-			{
-				id: 'display-pick',
-				text: 'click *cat philosophy* to keep its courses lit.',
-				point: '.legend[aria-label="subject colour legend"] li:nth-child(2) button',
-				clicked: '.legend button'
-			}
-		],
-		links: [
-			'with a colour kept lit, *− drop* takes that whole group off the grid. ↶ brings it back.',
-			'in your planner this menu opens from the *display* button on the bar.'
-		],
-		map: 'bar'
+		praise: '*fixed.* moved the wrong one? ↶ on the bar undoes any move.'
 	},
 	{
 		id: 'catalogue',
-		title: 'find it, drag it, drop it',
 		label: 'catalogue',
-		intro: 'every course on offer. search it, narrow it down, then drag what you want onto the grid.',
+		title: 'the catalogue',
+		intro: 'every course on offer. Jeff’s film major still needs *Critical Film Studies*.',
+		layout: { catalogue: true },
 		tasks: [
 			{
-				id: 'catalogue-search',
-				text: 'search for *cardboard*.',
+				id: 'catalogue-find',
+				title: 'find it',
+				how: 'type *critical* into the search box.',
 				point: '.search-box input',
 				done: (plan) => plan.search.trim().length > 1
 			},
 			{
-				id: 'catalogue-drag',
-				text: 'drag *CAT201* onto the grid. only the trimesters it runs in light up.',
-				drag: { from: '[data-course="CAT201"] [data-course-card]', to: cell(2, 3), label: 'CAT201' },
-				done: (plan) => plan.placedCodes.has('CAT201') || plan.placedCodes.has('CAT205')
-			},
-			{
-				id: 'catalogue-filter',
-				text: 'narrow the list with a pill like *cats*, or the sliders for more filters.',
-				point: '.pills.subjects',
-				done: (plan) => plan.narrowed
+				id: 'catalogue-add',
+				title: 'add it',
+				how: 'drag *FILM301* onto the grid, into the cell that turns mint.',
+				drag: { from: '[data-course="FILM301"] [data-course-card]', to: cell(2, 3), label: 'FILM301' },
+				done: (plan) => plan.placedCodes.has('FILM301')
 			}
 		],
-		links: [
-			'click a card to read about it and add it with a trimester picker.',
-			'drop a box back on the catalogue to take it off your plan.',
-			'click a trimester on the grid and this list shows what runs then.'
-		],
-		map: 'catalogue'
+		praise: '*added.* to take a course off, drag it back onto the catalogue.'
 	},
 	{
-		id: 'progress',
-		title: 'watch your degree fill up',
-		label: 'degree progress',
-		intro: 'every credit on the grid lands here. each programme gets a bar, required credits first, then electives.',
+		id: 'info',
+		label: 'info',
+		title: 'course info',
+		intro: 'click any course for its card: when it runs, what it needs first, and who teaches it.',
+		layout: { dock: true },
 		tasks: [
 			{
-				id: 'progress-open',
-				text: 'open *dream studies* to see its required and elective credits.',
-				point: '.prog .toggle',
-				clicked: '.prog .toggle'
-			},
-			{
-				id: 'progress-remove',
-				text: 'take a course off the grid with its *×* and watch the bar drop.',
-				point: chip('NAP101'),
-				done: (plan, from) => plan.placed.length < Object.keys(from.at).length
-			},
-			{
-				id: 'progress-undo',
-				text: 'press *↶* and the credits come straight back.',
-				point: UNDO,
-				done: undone
+				id: 'info-open',
+				title: 'open Critical Film Studies',
+				how: 'could Jeff take it sooner? click *FILM301* on the grid to find out.',
+				point: chip('FILM301'),
+				done: (plan) => plan.selected?.code === 'FILM301'
 			}
 		],
-		links: [
-			'*choices* lists pick-one pools. its dots fill as you place their courses.',
-			'*planning issues* counts what the hints found and jumps down to them.'
-		],
-		map: 'info'
+		praise: '*not sooner.* under *needs first*, its card says FILM201, and that’s in y2 t2.',
+		// skipped the catalogue? then the course this step opens isn't on the grid yet
+		enter: (plan) => {
+			if (!plan.placedCodes.has('FILM301')) plan.place('FILM301', 2, 3);
+		}
 	},
 	{
 		id: 'hints',
-		title: 'a little help along the way',
 		label: 'hints',
-		intro: 'tracker checks your plan against the rules as you go. ▲ problems come first, then ■ warnings.',
+		title: 'hints',
+		intro: 'Jeff moved *FILM301* to y2 t1 anyway, so now it has a ▲. the hints list says what’s wrong.',
+		layout: { rail: ['hints'] },
 		tasks: [
 			{
-				id: 'hints-open',
-				text: 'open *prerequisites first*. its courses light up on the grid.',
+				id: 'hints-read',
+				title: 'read the hint',
+				how: 'click *prerequisites first*, in the hints list.',
 				point: '.hint-heading',
 				clicked: '.hint-heading'
 			},
 			{
 				id: 'hints-fix',
-				text: 'fix it: drag *NAP301* to y2 t3, after NAP201. the hint goes away.',
-				drag: { from: chip('NAP301'), to: cell(2, 3), label: 'NAP301' },
-				done: (plan) => count(plan, 'warn') === 0
-			},
-			{
-				id: 'hints-badge',
-				text: 'click the *■* count at the top to hide warnings for now.',
-				point: '.tally-item[data-kind="caution"]',
-				clicked: '.tally-item'
+				title: 'fix it',
+				how: 'drag *FILM301* back to t3, after FILM201.',
+				drag: { from: chip('FILM301'), to: cell(2, 3), label: 'FILM301' },
+				done: (plan) => !flagged(plan, 'FILM301')
 			}
 		],
-		links: [
-			'a course a hint names wears the same mark on the grid. click it and the hint opens.',
-			'got permission to skip a rule? *waived?* crosses it off.'
-		],
-		map: 'hints',
-		// the problem may already be fixed by now: this slide needs one to show
+		praise: '*all clear.* tracker checks every move: whenever you see a ▲, the hints say why.',
+		// Jeff's move, made as the step opens (unless the course is in trouble already)
 		enter: (plan) => {
-			if (count(plan, 'warn') === 0) plan.place('NAP301', 2, 1);
+			if (!flagged(plan, 'FILM301')) plan.place('FILM301', 2, 1);
 		}
 	},
 	{
-		id: 'details',
-		title: 'every box has a story',
-		label: 'course details',
-		intro: 'click any box or catalogue card to see what it needs, what it leads to, when it runs and who teaches it.',
+		id: 'graduate',
+		label: 'graduate',
+		title: 'graduation day',
+		intro:
+			'the whole planner, as your own one looks: degree progress and hints on the left, then the catalogue and the grid.',
+		layout: { rail: ['progress', 'hints'], catalogue: true },
 		tasks: [
 			{
-				id: 'details-other',
-				text: 'click *NAP301* on the grid. the card swaps to it.',
-				point: chip('NAP301'),
-				done: (plan) => !!plan.selected && plan.selected.code !== 'NAP201'
+				id: 'graduate-degree',
+				title: 'degree complete',
+				how: 'degree progress, top left, says how many credits are left. the catalogue has the courses.',
+				point: '.credit-summary',
+				live: true,
+				done: complete
 			},
 			{
-				id: 'details-link',
-				text: 'click the course under *needs first* to jump to it.',
-				point: '.d-prereq .d-chip',
-				clicked: '.d-related .d-chip'
-			},
-			{
-				id: 'details-move',
-				text: 'pick a *trimester* and press *move*: no dragging needed.',
-				point: '.d-place-row',
-				clicked: '.d-place-go'
+				id: 'graduate-clear',
+				title: 'nothing to fix',
+				how: 'open a hint to see which course it’s about, then move that course.',
+				point: '[data-tour="hints"]',
+				live: true,
+				done: clear
 			}
 		],
-		links: [
-			'*offered* opens a table of when the course really ran.',
-			'*audit & result* marks an audit, or a failed attempt to retake.',
-			'all these names and courses are made up.'
-		],
-		map: 'details'
-	},
-	{
-		id: 'together',
-		title: 'now all of it at once',
-		label: 'all together',
-		intro: 'the real layout, in miniature. use anything you’ve learned to finish this tiny degree.',
-		tasks: [
-			{
-				id: 'together-problems',
-				text: 'no *▲ problems* left',
-				live: true,
-				done: (plan) => count(plan, 'warn') === 0
-			},
-			{
-				id: 'together-full',
-				text: 'both *programmes* full',
-				live: true,
-				done: (plan) => plan.stats.every((s) => s.creditsLeft === 0)
-			},
-			{
-				id: 'together-warnings',
-				text: 'no *■ warnings* left',
-				live: true,
-				done: (plan) => count(plan, 'caution') === 0
-			}
-		],
-		links: [],
-		map: 'all'
+		praise: '*Jeff graduates!* your own plan works the same way, with more boxes.'
 	}
 ] as const satisfies readonly LessonInfo[];
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.scss';
+	import { page } from '$app/state';
 	import SiteBar from '$lib/site/SiteBar.svelte';
 	import DesktopOnly from '$lib/ui/DesktopOnly.svelte';
 	import { provideSiteActions, type SiteActions } from '$lib/site/navigation';
@@ -43,6 +44,11 @@
 	});
 </script>
 
-<DesktopOnly />
-<SiteBar />
+<!-- the welcome's playground is a page inside a frame, not a page of the site:
+     it's always drawn at laptop width, and a bar of its own would push the
+     miniature down and out of line with the welcome around it -->
+{#if page.route.id !== '/welcome-playground'}
+	<DesktopOnly />
+	<SiteBar />
+{/if}
 {@render children()}

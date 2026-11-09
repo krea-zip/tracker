@@ -11,25 +11,30 @@
 
 	type Box = { x: number; y: number; w: number; h: number; round: number };
 
+	let layer = $state<HTMLElement>();
 	let ring = $state<Box | null>(null);
 	let from = $state<Box | null>(null);
 	let to = $state<Box | null>(null);
 
-	/** where something is, if it's on screen and not under a panel or scrolled away */
-	function seen(selector: string | undefined): Box | null {
-		const el = selector ? document.querySelector<HTMLElement>(selector) : null;
-		if (!el) return null;
-		const r = el.getBoundingClientRect();
-		if (!r.width || !r.height) return null;
-		const stack = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-		if (!stack.some((hit) => el.contains(hit) || hit.contains(el))) return null;
-		return {
-			x: r.left,
-			y: r.top,
-			w: r.width,
-			h: r.height,
-			round: parseFloat(getComputedStyle(el).borderTopLeftRadius)
-		};
+	/** where something is, in this layer's terms, if it's on screen and not under a panel or scrolled away */
+	function seen(selectors: string | string[] | undefined): Box | null {
+		for (const selector of typeof selectors === 'string' ? [selectors] : (selectors ?? [])) {
+			const el = document.querySelector<HTMLElement>(selector);
+			if (!el || !layer) continue;
+			const r = el.getBoundingClientRect();
+			if (!r.width || !r.height) continue;
+			const stack = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+			if (!stack.some((hit) => el.contains(hit) || hit.contains(el))) continue;
+			const base = layer.getBoundingClientRect();
+			return {
+				x: r.left - base.left,
+				y: r.top - base.top,
+				w: r.width,
+				h: r.height,
+				round: parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0
+			};
+		}
+		return null;
 	}
 
 	const same = (a: Box | null, b: Box | null) =>
@@ -74,7 +79,7 @@
 	></div>
 {/snippet}
 
-<div class="coach" aria-hidden="true">
+<div class="coach" aria-hidden="true" bind:this={layer}>
 	{#if ring}{@render outline(ring, 'at')}{/if}
 	{#if route && from && to}
 		{@render outline(from, 'at')}
@@ -85,8 +90,7 @@
 </div>
 
 <style lang="scss">
-	// fills the stage, which starts at the frame's corner, so a box measured
-	// against the window is already in this one's terms
+	// laid over the whole stage; every box is measured against this layer
 	.coach {
 		position: absolute;
 		inset: 0;
@@ -146,6 +150,7 @@
 		color: var(--color-on-accent);
 		background: var(--color-accent);
 		border-radius: 5px;
+		box-shadow: 0 4px 12px rgba(20, 30, 50, 0.22);
 		offset-rotate: 0deg;
 		animation: fly 2.8s var(--ease-out) infinite;
 	}

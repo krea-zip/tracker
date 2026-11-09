@@ -1,7 +1,7 @@
 <script lang="ts">
-	// Holds the playground's frame and talks to it: which slide is up, the
-	// page's theme and text size, the task being pointed at; and back, which
-	// tasks are done. It stays mounted between slides, so the pretend plan keeps
+	// Holds the playground's frame and talks to it: which step is up, the
+	// page's theme and text size, the quest being pointed at; and back, which
+	// quests are done. It stays mounted between steps, so the pretend plan keeps
 	// what the student did to it, and loads while the setup steps are up.
 	import { onMount } from 'svelte';
 	import type { Lesson } from './lessons';
@@ -52,6 +52,11 @@
 		theme.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 		return () => theme.disconnect();
 	});
+
+	/** put the pretend plan back the way it started, every quest unticked */
+	export function reset() {
+		frame?.contentWindow?.postMessage({ type: 'tracker-playground-lesson', reset: true }, location.origin);
+	}
 
 	// with the focus out here, ctrl+z would reach the real plan behind the
 	// welcome. while the playground's up, it's the playground's to undo

@@ -1,9 +1,11 @@
 <script lang="ts">
 	// The planner in miniature, inside the welcome's frame: the real grid and
-	// the real panels on a two-year pretend degree, one panel per slide and all
-	// of them on the last. The frame is always wider than a phone, so everything
-	// here lays out exactly as it does in the planner. One plan runs through
-	// every slide; this side watches it and tells the welcome which tasks are done.
+	// the real panels on a two-year pretend degree. Each step shows the grid
+	// and the one part it teaches, where that part sits in the planner; the
+	// last shows all of them at once. The frame is always wider than a phone,
+	// so everything here lays out exactly as it does in the planner. One plan
+	// runs through every step; this side watches it and tells the welcome which
+	// quests are done.
 	import { onMount, tick, untrack } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -14,58 +16,55 @@
 	import { plannerKeys } from '$lib/planner/shortcuts';
 	import OverviewGrid from '$lib/planner/board/OverviewGrid.svelte';
 	import TrimesterZoom from '$lib/planner/board/TrimesterZoom.svelte';
-	import ColourKey from '$lib/planner/board/bar/ColourKey.svelte';
 	import Catalogue from '$lib/planner/catalogue/Catalogue.svelte';
 	import DegreeProgress from '$lib/planner/sidebar/DegreeProgress.svelte';
-	import ChoicePools from '$lib/planner/sidebar/ChoicePools.svelte';
 	import Hints from '$lib/planner/sidebar/Hints.svelte';
 	import DetailsPanel from '$lib/planner/details/DetailsPanel.svelte';
+	import Flash from '$lib/planner/shell/Flash.svelte';
 	import { touchDrag } from '$lib/planner/drag/touchDrag';
 	import { dragMotion } from '$lib/planner/drag/dragMotion';
 	import { reducedMotion } from '$lib/ui/transitions';
 	import Coach from './Coach.svelte';
-	import ReadingKey from './ReadingKey.svelte';
 	import { playgroundPlacements } from './fixture';
-	import { LESSONS, lessonById, slotsOf, type Baseline, type Lesson } from './lessons';
+	import { LESSONS, lessonById, slotsOf, type Baseline, type Lesson, type Task } from './lessons';
 
 	const plan = providePlan(new Plan({ miniature: true }));
 	const keys = plannerKeys(plan);
 
-	let lesson = $state<Lesson>('terms');
-	let active = $state(false); // the welcome is on a playground slide
-	let pointedAt = $state<string | null>(null); // a task the student's pointing at beside the frame
+	let lesson = $state<Lesson>('grid');
+	let active = $state(false); // the welcome is on a playground step
+	let pointedAt = $state<string | null>(null); // a quest the student's pointing at beside the frame
 	const done = new SvelteSet<string>();
 	let baselines = $state.raw<Partial<Record<Lesson, Baseline>>>({});
 
 	let info = $derived(lessonById(lesson)!);
 	let now = $derived(nowHues(plan.programmes, (s) => plan.hueFor(s) ?? subjectById(s).hue));
 
-	let showRail = $derived(lesson === 'progress' || lesson === 'hints' || lesson === 'together');
-	let showCatalogue = $derived(lesson === 'catalogue' || lesson === 'together');
-	// the details slide keeps the whole grid beside its card; elsewhere the card
-	// slides over the grid, as it does in the planner
-	let docked = $derived(lesson === 'details');
+	// the sidebar's parts, the catalogue and the course card, each where the
+	// planner keeps it: the sidebar far left, the catalogue next, the card on
+	// the right. the steps that work in the card keep the whole grid beside
+	// it; elsewhere the card slides over the grid, as it does in the planner
+	let rail = $derived<readonly string[]>(info.layout.rail ?? []);
+	let showCatalogue = $derived(!!info.layout.catalogue);
+	let whole = $derived(rail.length > 1 && showCatalogue);
+	// a laptop-sized frame has no room for the card beside the grid as well as
+	// the sidebar: there it slides over the grid, as it does in the planner
+	let stageWidth = $state(0);
+	let docked = $derived(!!info.layout.dock && stageWidth >= 1100);
 
-	// the first task still to do, or whichever one is being pointed at
+	// the first quest still to do, or whichever one is being pointed at
 	let task = $derived.by(() => {
 		if (!active) return null;
 		if (pointedAt) return info.tasks.find((t) => t.id === pointedAt) ?? null;
 		return info.tasks.find((t) => !done.has(t.id)) ?? null;
 	});
 
-	const arrive = () => ({ duration: reducedMotion() ? 0 : 160 });
-
-	let say = $derived(
-		plan.flash ??
-			(plan.dragging
-				? 'mint cells: it runs then and its prerequisites come first. a faded cell still takes it, and the hints flag it.'
-				: 'the same controls as your planner · pretend courses · nothing here is saved')
-	);
+	const arrive = () => ({ duration: reducedMotion() ? 0 : 180 });
 
 	function setUp() {
 		plan.structure = 'major-minor';
 		plan.fourYear = true;
-		plan.picks = { major1: 'dreams', major2: 'clouds', minor: 'cats', conc: 'clouds' };
+		plan.picks = { major1: 'film', major2: 'span', minor: 'anth', conc: 'span' };
 		plan.placements = playgroundPlacements();
 		plan.now = { year: 2, trim: 1 };
 		plan.yearCount = 2;
@@ -87,7 +86,7 @@
 	}
 	untrack(setUp);
 
-	/** arrive on a slide: nothing of the last one left open */
+	/** arrive on a step: nothing of the last one left open */
 	function open(next: Lesson) {
 		lesson = next;
 		plan.selected = null;
@@ -101,14 +100,6 @@
 			lessonById(next)?.enter?.(plan);
 			baselines = { ...baselines, [next]: { at: slotsOf(plan) } };
 		}
-		if (next === 'details') plan.select('NAP201');
-		if (next === 'hints') {
-			void tick().then(() =>
-				document
-					.querySelector('[data-tour="hints"]')
-					?.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' })
-			);
-		}
 	}
 
 	async function startOver() {
@@ -120,14 +111,25 @@
 		plan.startHistory();
 	}
 
+	// a quest done ticks any before it still open: whoever fixed the problem
+	// first and read about it after can't be left stuck on "read it" with
+	// nothing left to read. a result the plan can stop meeting ticks only itself
+	function complete(task: Task) {
+		done.add(task.id);
+		if (task.live) return;
+		for (const t of info.tasks) {
+			if (t === task) break;
+			if (!t.live) done.add(t.id);
+		}
+	}
+
 	// a result can stop being true; an action, once tried, stays tried
 	$effect(() => {
 		const from = baselines[lesson];
 		if (!from) return;
 		for (const t of info.tasks) {
 			if (!t.done) continue;
-			const met = t.done(plan, from);
-			if (met) done.add(t.id);
+			if (t.done(plan, from)) complete(t);
 			else if (t.live) done.delete(t.id);
 		}
 	});
@@ -135,8 +137,41 @@
 	function noteClick(e: MouseEvent) {
 		const target = e.target as Element | null;
 		for (const t of info.tasks) {
-			if (t.clicked && target?.closest(t.clicked)) done.add(t.id);
+			if (t.clicked && target?.closest(t.clicked)) complete(t);
 		}
+	}
+
+	// the last step finished: a wave of mint across the grid, the colour a
+	// course turns a cell when it fits
+	let finished = $derived(lesson === 'graduate' && info.tasks.every((t) => done.has(t.id)));
+	let cheered = false;
+	$effect(() => {
+		if (!finished) {
+			cheered = false;
+			return;
+		}
+		if (cheered || !active) return;
+		cheered = true;
+		untrack(cheer);
+	});
+
+	function cheer() {
+		if (reducedMotion()) return;
+		const root = getComputedStyle(document.documentElement);
+		const mint = root.getPropertyValue('--color-drop-ok').trim();
+		const edge = root.getPropertyValue('--color-drop-ok-edge').trim();
+		const cells = document.querySelectorAll<HTMLElement>('.overview .cell');
+		cells.forEach((cell, i) => {
+			const rest = getComputedStyle(cell).backgroundColor;
+			cell.animate(
+				[
+					{ backgroundColor: rest, boxShadow: `inset 0 0 0 0 ${edge}` },
+					{ backgroundColor: mint, boxShadow: `inset 0 0 0 2px ${edge}`, offset: 0.35 },
+					{ backgroundColor: rest, boxShadow: `inset 0 0 0 0 ${edge}` }
+				],
+				{ duration: 1100, delay: 200 + (i % 3) * 110 + Math.floor(i / 3) * 160, easing: 'ease-out' }
+			);
+		});
 	}
 
 	// the course card lets go of its course at a click anywhere else, unless
@@ -161,7 +196,8 @@
 	function receive(event: MessageEvent) {
 		if (event.source !== parent || event.origin !== location.origin) return;
 		if (event.data?.type !== 'tracker-playground-lesson') return;
-		const { lesson: next, theme, rem, active: on, point, history } = event.data;
+		const { lesson: next, theme, rem, active: on, point, history, reset } = event.data;
+		if (reset) return void startOver();
 		if (history === 'undo') plan.undo();
 		if (history === 'redo') plan.redo();
 		if (history) return;
@@ -191,31 +227,15 @@
 	onclick={closeIfNothingPicked}
 />
 
-<div
-	class="playground"
-	data-lesson={lesson}
-	use:touchDrag
-	use:dragMotion
-	style:--now-a={now?.[0]}
-	style:--now-b={now?.[1]}
->
-	<div class="stage" class:details-open={!!plan.selected} class:docked>
-		{#if lesson === 'terms'}
-			<aside class="panel rail" aria-label="how to read the grid" in:fade={arrive()}><ReadingKey /></aside>
-		{:else if lesson === 'display'}
-			<aside class="panel rail" aria-label="display options" in:fade={arrive()}>
-				<div class="display">
-					<h3>display</h3>
-					<ColourKey inline />
-				</div>
-			</aside>
-		{/if}
-		{#if showRail}
-			<aside class="panel rail" aria-label="your degree" in:fade={arrive()}>
-				<DegreeProgress />
-				<ChoicePools />
-				<Hints />
-			</aside>
+<div class="playground" class:whole use:touchDrag use:dragMotion style:--now-a={now?.[0]} style:--now-b={now?.[1]}>
+	<div class="stage" class:details-open={!!plan.selected} class:docked bind:clientWidth={stageWidth}>
+		{#if rail.length}
+			{#key rail.join()}
+				<aside class="panel rail" aria-label="your degree" in:fade={arrive()}>
+					{#if rail.includes('progress')}<DegreeProgress />{/if}
+					{#if rail.includes('hints')}<Hints />{/if}
+				</aside>
+			{/key}
 		{/if}
 		{#if showCatalogue}
 			<div class="panel catalogue-panel" in:fade={arrive()}><Catalogue /></div>
@@ -238,10 +258,8 @@
 		<Coach {task} />
 	</div>
 
-	<footer class="status">
-		<span role="status">{say}</span>
-		<button onclick={startOver}>start over ↺</button>
-	</footer>
+	<!-- the planner's own one-liner: undone, a refused drop, a rule just applied -->
+	<Flash />
 </div>
 
 <style lang="scss">
@@ -258,7 +276,9 @@
 		// the "now" ring's colours, worked out where the hues are set, as in the planner
 		--color-now: oklch(var(--now-l) var(--now-c) var(--now-a, var(--accent-hue)));
 		--color-now-end: oklch(var(--now-l) var(--now-c) var(--now-b, var(--now-a, var(--accent-hue))));
-		--details-w: 34rem;
+		// the frame's own width (vw in here) shares itself out, so the grid
+		// keeps room for its courses' codes on a laptop as on a wide screen
+		--details-w: clamp(28rem, 30vw, 34rem);
 		display: flex;
 		flex-direction: column;
 		height: 100dvh;
@@ -277,13 +297,16 @@
 
 	.panel {
 		flex: none;
-		width: 32rem;
+		width: clamp(22rem, 24vw, 30rem);
 		min-height: 0;
 		border-right: 1px solid var(--color-border-warm);
 	}
 
 	.rail {
 		--rail-radius: 4px;
+		--panel-gutter: var(--card-gap);
+		display: flex;
+		flex-direction: column;
 		overflow-y: auto;
 		background: var(--color-bg);
 
@@ -296,23 +319,16 @@
 		overflow: hidden;
 	}
 
-	// the whole layout on the last slide: two panels and the grid, as in the planner
-	[data-lesson='together'] .panel {
-		width: 28rem;
+	// the whole layout: two panels and the grid, as in the planner
+	.whole .panel {
+		width: clamp(22rem, 21vw, 28rem);
 	}
 
-	// the display menu, opened out as one more rail section
-	.display {
-		@include rail-section;
-		border-bottom: 0;
-
-		> :global(.colour-key) {
-			padding: 0.4rem 1rem 1.2rem;
-		}
-	}
-
+	// past this width the trimesters only get emptier, so the bar and the grid
+	// stop growing and centre, as they do in the planner
 	.board {
-		--board-gutter: 2rem;
+		--board-max: 92rem;
+		--board-gutter: max(2.4rem, (100cqi - var(--board-max)) / 2);
 		container: plan / inline-size;
 		flex: 1;
 		display: flex;
@@ -329,23 +345,10 @@
 		flex-direction: column;
 	}
 
-	// the two rows share the height there is, up to a point: past it they only
-	// get emptier, so a tall window centres the grid instead
+	// the grid at the planner's own size, centred in the height there is
 	.board-main > :global(.overview) {
-		flex: 1 1 auto;
-		max-height: 66rem;
 		margin-block: auto;
-		grid-template-rows: auto repeat(2, minmax(13rem, 1fr));
-		padding-top: 1.6rem;
-		padding-bottom: 1.6rem;
-	}
-
-	// that slide has the menu opened out in the panel beside the grid
-	[data-lesson='display'] .board :global(.colour-key),
-	[data-lesson='display'] .board :global(.board-bar > span:nth-of-type(2)),
-	[data-lesson='display'] .board :global(.board-bar > span:nth-of-type(3)),
-	[data-lesson='display'] .board :global(.board-bar [aria-label='course labels']) {
-		display: none;
+		padding-bottom: 2.4rem;
 	}
 
 	.details {
@@ -381,44 +384,6 @@
 
 		&.docked .board {
 			margin-right: var(--details-w);
-		}
-	}
-
-	.status {
-		flex: none;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1.6rem;
-		min-height: 3.6rem;
-		padding: 0.4rem 1.6rem;
-		font-size: 1.2rem;
-		color: var(--color-text-muted);
-		background: var(--color-bg-light);
-		border-top: 1px solid var(--color-border-divider);
-
-		span {
-			min-width: 0;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-		}
-
-		button {
-			flex: none;
-			padding: 0.3rem 0.6rem;
-			font: inherit;
-			color: var(--color-text);
-			background: none;
-			border: 0;
-			border-radius: 4px;
-			cursor: pointer;
-			text-decoration: underline;
-			text-underline-offset: 0.2em;
-
-			&:hover {
-				color: var(--color-accent);
-			}
 		}
 	}
 </style>

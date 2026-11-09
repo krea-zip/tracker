@@ -251,10 +251,6 @@
 	<p class="previewing" role="status">Office preview · this tab shows the unsaved draft, not what students see</p>
 {/if}
 
-{#if plan.rehearsing}
-	<p class="previewing" role="status">Welcome replay · nothing here is saved, reload to get your plan back</p>
-{/if}
-
 {#if plan.feedbackDraft !== null}
 	<Modal title="feedback" onclose={() => (plan.feedbackDraft = null)}>
 		<FeedbackForm prefill={plan.feedbackDraft} onsent={() => (plan.feedbackDraft = null)} />
