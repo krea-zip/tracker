@@ -15,6 +15,7 @@
 		hasCode,
 		isAttemptId,
 		isCore,
+		subjectById,
 		termsOffered
 	} from '$lib/curriculum/data';
 	import { runText } from '$lib/planner/board/views';
@@ -63,6 +64,19 @@
 	let isAttempt = $derived(isAttemptId(sid));
 	let attemptsHere = $derived(shown ? plan.attemptsOf(shown.code) : []);
 	let failed = $derived(plan.gradeOf(sid) === 'U');
+	// a cross-listed course two or more of your programmes could take: you
+	// pick where its credits go, at least one, as many as all of them
+	let creditOpts = $derived(shown && !isAttempt && plan.onBoard(shown.code) ? plan.creditOptions(shown.code) : []);
+	let countedIn = $derived(shown ? (plan.claims.get(shown.code) ?? []) : []);
+	let chosenByYou = $derived(!!shown && !!plan.countsToward[shown.code]);
+	function toggleCount(code: string, i: number) {
+		const next = countedIn.includes(i) ? countedIn.filter((x) => x !== i) : [...countedIn, i];
+		if (!next.length) return; // it has to count somewhere
+		plan.setCountsToward(
+			code,
+			creditOpts.filter((x) => next.includes(x)).map((x) => plan.programmes[x].subject)
+		);
+	}
 	let roles = $derived(shown ? plan.rolesIn(shown.code) : []);
 
 	// separate courses that stand in for this one or it for them; never the
@@ -263,15 +277,18 @@
 			     dragging, keyboard, touch, or just quicker. the picker shows the
 			     current trimester, so the button only turns up with something to do -->
 				<div class="d-place-row">
-					<select id="course-trimester" bind:value={target} aria-label="trimester to put {c.code} in">
-						{#each plan.years as y (y)}
-							{#each plan.trims as t (t)}
-								<option value="{y}-{t}" disabled={plan.coreOnly(y, t) && !isCore(c.code)}>
-									{termLabel(y, t)}{c.offered.length && !c.offered.includes(t) ? ' (not offered)' : ''}
-								</option>
+					<label class="d-where">
+						<span>{placedAt ? 'in' : 'put in'}</span>
+						<select id="course-trimester" bind:value={target} aria-label="trimester to put {c.code} in">
+							{#each plan.years as y (y)}
+								{#each plan.trims as t (t)}
+									<option value="{y}-{t}" disabled={plan.coreOnly(y, t) && !isCore(c.code)}>
+										{plan.trimName(y, t)}{c.offered.length && !c.offered.includes(t) ? ' · not offered' : ''}
+									</option>
+								{/each}
 							{/each}
-						{/each}
-					</select>
+						</select>
+					</label>
 					{#if !placedAt || moving}
 						<button class="d-place-go" onclick={placeIt}
 							>{placedAt ? 'move' : attemptsHere.length ? 'add another attempt' : 'add to plan'}</button
@@ -364,6 +381,45 @@
 							</div>
 						</details>
 					{/key}
+				{/if}
+
+				{#if creditOpts.length > 1}
+					<!-- a cross-listed course: which of your programmes its credits go to.
+					     folded, it says where they go now -->
+					<details class="d-disclosure" open={chosenByYou}>
+						<summary
+							><span>counts toward</span><span class="d-summary-value"
+								>{countedIn.map((i) => subjectById(plan.programmes[i].subject).label).join(' + ')}</span
+							><span class="chev" aria-hidden="true"></span></summary
+						>
+						<div class="d-disclosure-body">
+							{#each creditOpts as i (i)}
+								{@const prog = plan.programmes[i]}
+								{@const on = countedIn.includes(i)}
+								{@const last = on && countedIn.length === 1}
+								<!-- the last one ticked stays ticked: it has to count somewhere -->
+								<label class="d-audit" title={last ? 'it has to count toward at least one' : undefined}>
+									<input
+										type="checkbox"
+										checked={on}
+										aria-disabled={last}
+										onclick={(e) => last && e.preventDefault()}
+										onchange={() => toggleCount(c.code, i)}
+									/>
+									<span
+										>{subjectById(prog.subject).label}
+										{prog.role}<span class="d-counts-code">{c.codesBySubject[prog.subject] ?? c.code}</span></span
+									>
+								</label>
+							{/each}
+							<p class="d-no-audit">
+								at least one, up to all.
+								{#if chosenByYou}<button class="d-counts-auto" onclick={() => plan.setCountsToward(c.code, null)}
+										>back to automatic</button
+									>{:else}picked automatically for now.{/if}
+							</p>
+						</div>
+					</details>
 				{/if}
 
 				<!-- earlier attempts at this course, each opens its own record -->
@@ -623,17 +679,28 @@
 		line-height: 1.35;
 	}
 
+	// "in [y3 t3 ▾]", a button when there's something to do, remove at the end
 	.d-place-row {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: stretch;
+		align-items: center;
+		gap: 0.6rem 0.8rem;
+		padding-bottom: 0.6rem;
+	}
+
+	.d-where {
+		display: flex;
+		align-items: center;
 		gap: 0.6rem;
+		font-size: var(--text-body);
+		color: var(--color-text-muted);
 
 		select {
 			@include flat-select;
-			flex: 1 1 14rem;
+			flex: none;
 			width: auto;
 			font: inherit;
+			color: var(--color-text);
 		}
 	}
 
@@ -652,6 +719,7 @@
 
 	// taking a course off the plan is a quiet word, not a second button
 	.d-place-remove {
+		margin-left: auto;
 		padding: 0 0.4rem;
 		font: inherit;
 		font-size: var(--text-body);
@@ -986,6 +1054,32 @@
 		}
 	}
 
+	// a folded disclosure says its current value after its name, quietly
+	.d-summary-value {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-weight: 400;
+	}
+
+	.d-counts-auto {
+		padding: 0;
+		font: inherit;
+		color: var(--color-accent);
+		background: none;
+		border: 0;
+		cursor: pointer;
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
+	.d-counts-code {
+		margin-left: 0.5rem;
+		font-size: 1.1rem;
+		color: var(--color-text-muted);
+	}
+
 	.d-audit {
 		display: flex;
 		align-items: center;
@@ -1154,7 +1248,7 @@
 		.d-disclosure summary,
 		.d-place-go,
 		.d-place-remove,
-		.d-place-row select {
+		.d-where select {
 			min-height: 4.4rem;
 		}
 		.d-more {

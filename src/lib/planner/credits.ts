@@ -23,25 +23,42 @@ function satisfiesStructure(course: Course, codes: Set<string>): boolean {
 	);
 }
 
-/** Ordinary cross-listed courses follow the configured sharing policy.
+/** can programme i take this course's credits at all? */
+function countsFor(plan: Plan, c: Course, i: number): boolean {
+	if (isTranscriptOnly(c.code)) return false;
+	const prog = plan.programmes[i];
+	if (prog.subject === 'open') return !isCore(c.code);
+	const s = plan.programmeSets[i];
+	// is the course named in this programme's scraped required / choice /
+	// elective lists for the exact variant?
+	const inLists =
+		satisfiesStructure(c, s.requiredAll) || satisfiesStructure(c, s.pick) || c.codes.some((x) => s.elective.has(x));
+	// a minor counts ONLY the courses its scraped structure names, not
+	// every course in the department, so cross-listed or extra
+	// department courses don't inflate its credits
+	if (prog.role === 'minor') return inLists;
+	return ofSubject(c, prog.subject) || inLists;
+}
+
+/** the declared programmes (by index) a course could count toward: those
+ *  that take it on their own, plus any it is cross-listed into. Two or
+ *  more and the student may choose (Plan.countsToward) */
+export function creditTakers(plan: Plan, c: Course): number[] {
+	if (isTranscriptOnly(c.code)) return [];
+	return plan.programmes
+		.map((_, i) => i)
+		.filter((i) => {
+			const prog = plan.programmes[i];
+			return prog.subject !== 'open' && (countsFor(plan, c, i) || c.subjects.includes(prog.subject));
+		});
+}
+
+/** Ordinary cross-listed courses follow the configured sharing policy, unless the
+ * student chose where one counts (Plan.countsToward).
  * Explicit required-course equivalences satisfy both programme tallies;
  * totalPlacedCredits still counts the actual course only once. */
 export function claimCredits(plan: Plan): Map<string, number[]> {
-	const counts = (c: Course, i: number): boolean => {
-		if (isTranscriptOnly(c.code)) return false;
-		const prog = plan.programmes[i];
-		if (prog.subject === 'open') return !isCore(c.code);
-		const s = plan.programmeSets[i];
-		// is the course named in this programme's scraped required / choice /
-		// elective lists for the exact variant?
-		const inLists =
-			satisfiesStructure(c, s.requiredAll) || satisfiesStructure(c, s.pick) || c.codes.some((x) => s.elective.has(x));
-		// a minor counts ONLY the courses its scraped structure names, not
-		// every course in the department, so cross-listed or extra
-		// department courses don't inflate its credits
-		if (prog.role === 'minor') return inLists;
-		return ofSubject(c, prog.subject) || inLists;
-	};
+	const counts = (c: Course, i: number) => countsFor(plan, c, i);
 	// …unless /admin has set the course (or the whole site) to share its
 	// credits: then it counts toward EVERY declared programme it satisfies.
 	// The open minor still only takes what no declared programme did.
@@ -74,6 +91,15 @@ export function claimCredits(plan: Plan): Map<string, number[]> {
 		...courses.filter((c) => !plan.programmes.some((_, i) => requires(c, i))).sort((a, b) => takersOf(a) - takersOf(b))
 	];
 	for (const c of ordered) {
+		// the student said where it counts: exactly those, nothing automatic
+		const chosen = plan.countsToward[c.code];
+		if (chosen?.length) {
+			const picked = creditTakers(plan, c).filter((i) => chosen.includes(plan.programmes[i].subject));
+			if (picked.length) {
+				for (const i of picked) claim(c, i);
+				continue;
+			}
+		}
 		const takers = plan.programmes.map((_, i) => i).filter((i) => counts(c, i));
 		const declared = takers.filter((i) => plan.programmes[i].subject !== 'open');
 		const equivalentRequirement = declared.some((i) => {

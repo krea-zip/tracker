@@ -41,11 +41,11 @@ import {
 import { GRADE_POINTS, isGradeLetter, weightedGpa, type GradeMark } from '$lib/planner/grades/grades';
 import { planHints } from './rules';
 import { choicePools } from './choices';
-import { claimCredits, programmeStats } from './credits';
+import { claimCredits, creditTakers, programmeStats } from './credits';
 import { planFill } from './fill';
 import { PlanHistory } from './history.svelte';
 import { meetsRequired, ofSubject, setsFor, typeIn } from './programmeSets';
-import { cleanBreaks, cleanGrades, cleanNow, cleanPlacements, cleanZoomPos } from './saveFormat';
+import { cleanBreaks, cleanCountsToward, cleanGrades, cleanNow, cleanPlacements, cleanZoomPos } from './saveFormat';
 import {
 	BREAK_KINDS,
 	coreOnly,
@@ -89,6 +89,10 @@ export class Plan {
 	picks = $state({ major1: 'mathematics', major2: 'history', minor: 'physics', conc: 'physics' });
 	placements = $state<Record<SlotKey, string[]>>({});
 	audited = $state<string[]>([]); // codes the student has marked as audits
+	// a cross-listed course's credits, counted toward the programmes the
+	// student picked (canonical code → subject ids) instead of the automatic
+	// split in credits.ts. At least one, at most every programme that can take it
+	countsToward = $state<Record<string, string[]>>({});
 	grades = $state<Record<string, GradeMark>>({}); // code → grade / status (audits never carry one)
 	// what a grid chip is labelled with, either, or both. Turning one off
 	// forces the other on, so a chip is never blank
@@ -245,6 +249,7 @@ export class Plan {
 			batchStartYear,
 			grades,
 			audited,
+			countsToward,
 			waived,
 			touched,
 			breaks,
@@ -259,6 +264,7 @@ export class Plan {
 			batchStartYear,
 			grades,
 			audited,
+			countsToward,
 			waived,
 			touched,
 			breaks,
@@ -302,6 +308,7 @@ export class Plan {
 			waived: this.waived,
 			zoomPos: this.zoomPos,
 			audited: this.audited,
+			countsToward: this.countsToward,
 			grades: this.grades,
 			view: this.view,
 			gradeMode: this.gradeMode, // older builds read this, keep writing it
@@ -386,6 +393,8 @@ export class Plan {
 		if (placements) this.placements = placements;
 		const zoomPos = cleanZoomPos((parsed as { zoomPos?: unknown }).zoomPos);
 		if (zoomPos) this.zoomPos = zoomPos;
+		const countsToward = cleanCountsToward((parsed as { countsToward?: unknown }).countsToward);
+		this.countsToward = countsToward ?? {};
 		if (Array.isArray(parsed.audited))
 			this.audited = parsed.audited.filter((c: unknown): c is string => typeof c === 'string' && hasCode(c));
 		const grades = cleanGrades(parsed.grades);
@@ -828,6 +837,20 @@ export class Plan {
 		return i >= 0 ? this.hueFor(this.programmes[i].subject) : undefined;
 	}
 
+	/** the programmes (by index) a placed cross-listed course could count
+	 *  toward: two or more means the student gets to choose */
+	creditOptions(code: string): number[] {
+		return creditTakers(this, byCode(code));
+	}
+
+	/** count a course toward these subjects; null goes back to automatic */
+	setCountsToward(code: string, subjects: string[] | null) {
+		this.#touch();
+		const key = byCode(code).code;
+		const { [key]: _old, ...rest } = this.countsToward;
+		this.countsToward = subjects?.length ? { ...rest, [key]: subjects } : rest;
+	}
+
 	isAudit(code: string): boolean {
 		return this.audited.includes(code);
 	}
@@ -902,12 +925,16 @@ export class Plan {
 	}
 
 	/** the code a placed course should read as on the grid: the one from
-	 *  the student's own programme (HIST235 for a historian) when the
-	 *  cross-listed course belongs to exactly one of their subjects */
+	 *  the student's own programme (HIST301 for a history major, not SOCL304).
+	 *  When it is cross-listed under several of their subjects, the highest
+	 *  programme wins: major, then second major, minor, concentration */
 	shownCode(code: string): string {
 		const c = byCode(code);
-		const inProgramme = this.selectedSubjects.filter((s) => c.subjects.includes(s));
-		return inProgramme.length === 1 ? (c.codesBySubject[inProgramme[0]] ?? c.code) : c.code;
+		for (const s of this.selectedSubjects) {
+			const own = c.codesBySubject[s];
+			if (own) return own;
+		}
+		return c.code;
 	}
 
 	/** Shared course label: whichever of the code / title switches above the grid
@@ -1134,6 +1161,7 @@ export class Plan {
 		this.breaks = {};
 		this.now = null;
 		this.audited = [];
+		this.countsToward = {};
 		this.grades = {};
 		this.showCodes = true;
 		this.showTitles = false;

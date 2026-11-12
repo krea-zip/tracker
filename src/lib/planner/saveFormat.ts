@@ -73,3 +73,15 @@ export function cleanGrades(raw: unknown): Record<string, GradeMark> | null {
 	for (const [code, mark] of Object.entries(raw)) if (hasCode(code) && isGradeMark(mark)) grades[code] = mark;
 	return grades;
 }
+
+/** per-course "counts toward" choices: real courses, subject ids, never empty */
+export function cleanCountsToward(raw: unknown): Record<string, string[]> | null {
+	if (!isObject(raw)) return null;
+	const out: Record<string, string[]> = {};
+	for (const [code, subjects] of Object.entries(raw)) {
+		if (!hasCode(code) || !Array.isArray(subjects)) continue;
+		const ok = subjects.filter((s): s is string => typeof s === 'string');
+		if (ok.length) out[code] = ok;
+	}
+	return out;
+}

@@ -94,6 +94,13 @@
 			{#if type === 'required'}<span class="req-dot" role="img" aria-label="required"></span>{/if}
 			<span class="label">
 				{#if plan.showCodes}<b class="code">{plan.shownCode(code)}</b
+					>{/if}{#if byCode(code).codes.length > 1}{@const also = byCode(code).codes.filter(
+						(x) => x !== plan.shownCode(code)
+					)}<span
+						class="xlist"
+						role="img"
+						aria-label="cross-listed as {also.join(', ')}"
+						title="cross-listed as {also.join(', ')}">⇄</span
 					>{/if}{#if plan.showCodes && plan.showTitles}{' · '}{/if}{#if plan.showTitles}{byCode(code).title}{:else}<span
 						class="phone-title">{byCode(code).title}</span
 					>{/if}
@@ -242,6 +249,14 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	// cross-listed under other departments: a small quiet mark after the code
+	.xlist {
+		margin: 0 0.15rem 0 0.3rem;
+		font-size: 0.85em;
+		font-weight: 400;
+		opacity: 0.55;
 	}
 
 	// the code reads first, a touch bolder than the title beside it
