@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Portrait from '$lib/lecturers/Portrait.svelte';
+	import PixelIcon from '$lib/ui/PixelIcon.svelte';
 	import { usePlan } from '$lib/planner/context';
 	import type { Course } from '$lib/types';
 	import { facultyOf, isCore, taughtBy, termLabel } from '$lib/curriculum/data';
@@ -61,17 +62,27 @@
 										easing: cubicOut
 									}}
 								>
-									{#if p.office_hours}<div class="d-office">
-											<span class="d-eyebrow">Office hours</span>
-											<p>{p.office_hours}</p>
-										</div>{/if}
-									{#if p.email || p.url}
-										<!-- plain text to copy, and one link out -->
-										<span class="d-prof-links">
-											{#if p.email}<span class="d-email">{p.email}</span>{/if}
-											{#if p.url}<a href={p.url} target="_blank" rel="noopener">Faculty profile ↗</a>{/if}
-										</span>
+									<!-- the three facts as icon rows, then the profile link -->
+									{#if p.email || p.office_number || p.office_hours}
+										<ul class="d-info">
+											{#if p.email}<li>
+													<span class="d-tile"><PixelIcon name="mail" size="1.6rem" snap /></span><span class="d-email"
+														>{p.email}</span
+													>
+												</li>{/if}
+											{#if p.office_number}<li>
+													<span class="d-tile"><PixelIcon name="location" size="1.6rem" snap /></span><span
+														>{p.office_number}</span
+													>
+												</li>{/if}
+											{#if p.office_hours}<li>
+													<span class="d-tile"><PixelIcon name="clock" size="1.6rem" snap /></span><span
+														>{#each p.office_hours.split(', ') as slot}<span class="d-slot">{slot}</span>{/each}</span
+													>
+												</li>{/if}
+										</ul>
 									{/if}
+									{#if p.url}<a class="d-profile" href={p.url} target="_blank" rel="noopener">faculty profile ↗</a>{/if}
 									<!-- what they've taught lately, term by term (as kreabot
 									     lists it), each another course to jump to -->
 									{#if terms.length}<div class="d-eyebrow d-history-label">Recent teaching</div>{/if}
@@ -171,16 +182,50 @@
 		}
 	}
 	.d-taught-list {
+		container-type: inline-size;
 		display: grid;
 		gap: 1.2rem;
 		padding-top: 1.2rem;
 	}
-	.d-office {
+	.d-info {
 		display: grid;
-		gap: 0.2rem;
-	}
-	.d-office p {
+		gap: 1.2rem;
+		font-size: 1.3rem;
+		line-height: 1.5;
+		padding: 0;
 		margin: 0;
+		border: 0;
+	}
+	.d-info li {
+		display: flex;
+		align-items: flex-start;
+		gap: 1.2rem;
+	}
+	.d-info li > span:last-child {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	.d-tile {
+		display: grid;
+		place-items: center;
+		width: 1.6rem;
+		/* exactly the first text line (1.5 × 1.3rem), icon centred in it */
+		height: 1.95rem;
+		flex: none;
+		color: var(--color-accent);
+	}
+	.d-slot {
+		display: block;
+	}
+	.d-profile {
+		display: inline-block;
+		margin-top: 1.4rem;
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+	.d-profile:hover {
+		color: var(--color-text);
 	}
 	.d-eyebrow {
 		font-size: 1.05rem;
@@ -235,22 +280,11 @@
 		text-decoration: underline;
 		text-underline-offset: 0.2em;
 	}
-	.d-prof-links {
-		display: grid;
-		justify-items: start;
-		gap: 0.4rem;
-	}
 	.d-email {
+		font-size: 1.3rem;
+		font-weight: 650;
 		overflow-wrap: anywhere;
 		user-select: all; // one click selects the whole address to copy
-	}
-	.d-prof-links a {
-		color: var(--color-accent);
-		text-decoration: underline;
-		text-underline-offset: 0.2em;
-	}
-	.d-prof-links a:hover {
-		color: var(--color-text);
 	}
 	button:focus-visible,
 	a:focus-visible {
@@ -267,7 +301,7 @@
 	}
 	@include touch {
 		.d-taught-head,
-		.d-prof-links a {
+		.d-profile {
 			max-width: 100%;
 			overflow-wrap: anywhere;
 			min-height: 4.4rem;

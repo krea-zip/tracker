@@ -16488,8 +16488,7 @@
 				"history": "HIST344",
 				"sociology": "SOCL344"
 			},
-			"credits": 0,
-			"pendingCredits": true,
+			"credits": 4,
 			"required": false,
 			"offered": [
 				2
@@ -17445,6 +17444,7 @@
 			"email": "syed.meesum@krea.edu.in",
 			"position": "Assistant Professor, Computer Science",
 			"office_hours": "Thu: 10:00-12:00, Mon: 11:00-13:00",
+			"office_number": "JSW 210",
 			"image_url": "https://www-cdn.krea.edu.in/sias/2023/07/Syed-Mohammad-Meesum.png",
 			"url": "https://krea.edu.in/sias/dr-syed-mohammad-meesum/",
 			"date_of_joining": "09-Mar-20"

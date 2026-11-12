@@ -44,6 +44,8 @@ export type Lecturer = {
 	email: string;
 	position: string;
 	office_hours: string;
+	/** room or office code, e.g. "JSW 210", when the record has one */
+	office_number?: string;
 	image_url: string;
 	url: string;
 	date_of_joining?: string;
