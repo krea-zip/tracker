@@ -272,7 +272,7 @@
 	// a dragged edge overrides their default widths.
 	.app {
 		--rail-w: var(--rail-user-w, minmax(max-content, 28rem));
-		--catalogue-w: var(--catalogue-user-w, 32rem);
+		--catalogue-w: var(--catalogue-user-w, 30rem);
 		--details-w: 36rem;
 		--board-w: minmax(0, 1fr);
 		--rail-strip-w: 5.2rem;
@@ -445,7 +445,7 @@
 
 		.app.details-docked {
 			--rail-w: var(--rail-user-w, minmax(0, 25rem));
-			--catalogue-w: var(--catalogue-user-w, 32rem);
+			--catalogue-w: var(--catalogue-user-w, 30rem);
 			--details-w: 30rem;
 			grid-template-areas: 'rail catalogue board details';
 			grid-template-columns: var(--rail-w) var(--catalogue-w) var(--board-w) var(--details-w);

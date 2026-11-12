@@ -11,8 +11,10 @@
 	let subjects = $derived([...new Set([...plan.selectedSubjects.filter((s) => s !== 'open'), 'core'])]);
 </script>
 
-{#snippet pill(label: string, on: boolean, toggle: () => void, note?: string, hue?: number)}
-	<button class="pill" style:--hue={hue} aria-pressed={on} title={note} onclick={toggle}>{label}</button>
+{#snippet pill(label: string, on: boolean, toggle: () => void, note?: string, hue?: number, subject?: string)}
+	<button class="pill" style:--hue={hue} data-subject={subject} aria-pressed={on} title={note} onclick={toggle}
+		>{label}</button
+	>
 {/snippet}
 
 <label class="browse">
@@ -35,7 +37,8 @@
 				plan.toggleFilter(id);
 			},
 			undefined,
-			plan.hueFor(id)
+			plan.hueFor(id),
+			id
 		)}
 	{/each}
 </div>

@@ -12,8 +12,11 @@
 	<button class:active={plan.showCodes} aria-pressed={plan.showCodes} onclick={() => plan.toggleLabel('code')}
 		><PixelIcon name="code" />codes</button
 	>
-	<button class:active={plan.showTitles} aria-pressed={plan.showTitles} onclick={() => plan.toggleLabel('title')}
-		><PixelIcon name="title" />titles</button
+	<button
+		class:active={plan.showTitles}
+		aria-pressed={plan.showTitles}
+		data-label-key="title"
+		onclick={() => plan.toggleLabel('title')}><PixelIcon name="title" />titles</button
 	>
 	{#if plan.gradeMode}
 		<button

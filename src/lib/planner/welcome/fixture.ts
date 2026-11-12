@@ -56,7 +56,23 @@ const courses = [
 	course('ANTH205', 'Origins of Vampire Mythology', 'anth', [1, 2], ['ANTH101']),
 	course('ANTH210', 'Comparative Religion', 'anth', [2, 3], ['ANTH101'], false),
 	course('SPAN101', 'Spanish 101', 'span', [3], [], false),
-	course('STAT101', 'Introduction to Statistics', 'stat', [1, 2, 3], [], false)
+	course('STAT101', 'Introduction to Statistics', 'stat', [1, 2, 3], [], false),
+	// the rest of the catalogue: more to browse, filter and search, none of
+	// it needed, so the story's plan never changes because of them
+	course('FILM220', 'Cooperative Calligraphy', 'film', [1, 2], [], false),
+	course('FILM230', 'Horror Fiction in Seven Spooky Steps', 'film', [3], [], false),
+	course('FILM310', 'Documentary Filmmaking: Redux', 'film', [2], ['FILM201'], false),
+	course('FILM320', 'Studies in Modern Movement', 'film', [1, 3], [], false),
+	course('ANTH220', 'Basic Genealogy', 'anth', [1, 3], [], false),
+	course('ANTH230', 'Contemporary American Poultry', 'anth', [2], [], false),
+	course('ANTH240', 'Geography of Global Conflict', 'anth', [1], [], false),
+	course('ANTH250', 'Pillows and Blankets', 'anth', [3], ['ANTH101'], false),
+	course('SPAN201', 'Debate 109', 'span', [1, 2], ['SPAN101'], false),
+	course('SPAN210', 'Investigative Journalism', 'span', [2, 3], [], false),
+	course('STAT201', 'Epidemiology', 'stat', [2], ['STAT101'], false),
+	course('STAT210', 'Remedial Chaos Theory', 'stat', [1, 3], [], false),
+	course('STAT220', 'Basic Rocket Science', 'stat', [3], [], false),
+	course('STAT230', 'Pascal’s Triangle Revisited', 'stat', [1, 2], ['STAT101'], false)
 ];
 
 // every programme here is fixed courses only, no "pick any two" pools, so
@@ -98,7 +114,9 @@ export const playgroundSnapshot: CurriculumSnapshot & { descriptions: Record<str
 	rules: {
 		TRIM_MIN: 8,
 		TRIM_NORMAL_MAX: 12,
-		TRIM_STANDARD_MAX: 16,
+		// lower than the real 16, so the hints step can show an advisory
+		// (a heavy trimester) with only Jeff's few courses
+		TRIM_STANDARD_MAX: 12,
 		TRIM_HARD_MAX: 20,
 		HEAVY_TRIMS_ALLOWED: 2,
 		AUDIT_LIMIT: 2,
