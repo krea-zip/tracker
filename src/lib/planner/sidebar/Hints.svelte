@@ -139,9 +139,10 @@
 	// things to fix, and, quieter, below them, notes that are just facts
 	// ("2 audits left"); the badge counts only the first, so it matches
 	let issues = $derived(sorted.filter((h) => h.kind === 'warn' || h.kind === 'caution'));
-	// "all foundation courses placed" and "3 audits left" were noise, only
-	// notes that change a decision are listed
-	let notes = $derived(sorted.filter((h) => h.kind === 'info'));
+	// the good news ("all foundation courses placed", "2 audits left") rides
+	// along at the end, green, inside the folded advisories, so it never
+	// crowds the things to fix
+	let notes = $derived(sorted.filter((h) => h.kind === 'info' || h.kind === 'good'));
 	let problems = $derived(issues.length);
 
 	// hints with the same heading fold into one row, three "prerequisite
@@ -213,14 +214,20 @@
 
 {#snippet hintGroup(group: Group, gi: number)}
 	{@const open = openKey === group.key}
-	<div class="chip" class:open data-kind={group.kind} role="group">
+	<!-- one hint: its sentence is the card; several: a heading that opens to them -->
+	{@const single = group.hints.length === 1}
+	{@const extras = !single || group.hints.some((h) => h.toPlace?.length || h.id)}
+	<div class="chip" class:open class:single data-kind={group.kind} role="group">
 		<button class="hint-heading" aria-expanded={open} aria-controls={`hint-detail-${gi}`} onclick={() => toggle(group)}>
 			<span class="hint-main">
 				<span class="hint-title">
-					<i class="tone-dot" data-kind={group.kind} aria-hidden="true"></i>{group.title}
+					<i class="tone-dot" data-kind={group.kind} aria-hidden="true"></i>{single
+						? group.hints[0].text
+						: group.title}{#if !single}<span class="count">{group.hints.length}</span>{/if}
 				</span>
-				<!-- the courses it's about, as small chips in their own colours -->
-				{#if group.courses.length}
+				<!-- the courses it's about, as small chips in their own colours
+				     (a single hint's sentence names them already) -->
+				{#if !single && group.courses.length}
 					<span class="tags">
 						{#each group.courses.slice(0, TAGS_SHOWN) as code (code)}
 							<span class="tag" data-type={plan.courseType(code)} style:--hue={plan.hueOf(code)}
@@ -232,9 +239,9 @@
 					</span>
 				{/if}
 			</span>
-			<span class="chev" aria-hidden="true"></span>
+			{#if extras}<span class="chev" aria-hidden="true"></span>{/if}
 		</button>
-		{#if open}
+		{#if open && extras}
 			<ul
 				class="hint-detail"
 				id={`hint-detail-${gi}`}
@@ -246,7 +253,9 @@
 					     line clicked keeps its courses lit on the grid -->
 					<li class:here={names(hint, plan.selected?.code)} class:lit={pinned === lineKey}>
 						<div class="line">
-							{#if hint.codes.some(hasCode)}
+							{#if single}
+								<!-- the sentence is the heading above -->
+							{:else if hint.codes.some(hasCode)}
 								<!-- each course in the sentence is its own link; pointing at the
 								     line previews its courses on the grid -->
 								<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -450,7 +459,7 @@
 		justify-content: space-between;
 		gap: 1rem;
 		width: 100%;
-		padding: 0.9rem var(--panel-gutter);
+		padding: 0.8rem 1rem;
 		font: inherit;
 		font-weight: 500;
 		text-align: left;
@@ -463,11 +472,6 @@
 
 	.chip[data-kind='warn'] .hint-heading {
 		font-weight: 650;
-		box-shadow: inset 3px 0 color-mix(in srgb, var(--color-hint-warn-deep) 70%, transparent);
-	}
-
-	.chip.open > .hint-heading {
-		background: color-mix(in srgb, var(--color-accent) 7%, transparent);
 	}
 
 	.hint-main {
@@ -496,6 +500,24 @@
 
 	.tag {
 		@include course-tag;
+	}
+
+	.count {
+		margin-left: 0.5rem;
+		font-size: 1.15rem;
+		font-weight: 500;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-text-muted);
+	}
+
+	// a single hint's sentence is its heading: ordinary weight, so a stack of
+	// them reads as sentences, not shouting
+	.chip.single .hint-heading {
+		font-weight: 450;
+	}
+
+	.chip.single[data-kind='warn'] .hint-heading {
+		font-weight: 500;
 	}
 
 	.tag-more {
@@ -566,21 +588,23 @@
 		gap: 0.5rem;
 		width: 100%;
 		margin: 0;
-		padding: 0 var(--panel-gutter) 1rem calc(var(--panel-gutter) + 1.6rem);
+		padding: 0 0.8rem 0.8rem;
 		list-style: none;
 
+		// each hint in a group its own small block, so two sentences about
+		// different courses don't run together: a lighter face, the site's lit
+		// top edge (--shadow-inset), and a soft shadow underneath
 		> li {
 			display: flex;
 			align-items: flex-start;
 			gap: 0.6rem;
-		}
-
-		// each hint in a group on its own dotted rule, so two sentences about
-		// different courses don't run together
-		> li + li {
-			margin-top: 0.3rem;
-			padding-top: 0.8rem;
-			border-top: 1px dotted var(--color-border);
+			padding: 0.7rem 0.9rem;
+			background: color-mix(in srgb, var(--color-bg-light) 55%, transparent);
+			border-radius: 0.6rem;
+			box-shadow:
+				var(--shadow-inset),
+				0 1px 2px color-mix(in srgb, var(--tone-deep) 45%, transparent);
+			transition: background-color 0.15s ease;
 		}
 
 		// the hint about the course open on the right
@@ -589,9 +613,25 @@
 		}
 
 		// the line whose courses are lit on the grid
+		li.lit {
+			background: var(--color-bg-light);
+		}
+
 		li.lit .chip-text {
 			color: var(--color-text);
 			font-weight: 600;
+		}
+	}
+
+	// a single hint's sentence is its heading; what's left under it (a
+	// waiver link, courses to place) sits plain, not in a block of its own
+	.chip.single .hint-detail {
+		padding-left: calc(1rem + 1.6rem);
+
+		> li {
+			padding: 0;
+			background: none;
+			box-shadow: none;
 		}
 	}
 
@@ -603,35 +643,56 @@
 		vertical-align: -0.05em;
 	}
 
-	// hint rows run edge to edge, each on a dotted rule, so a row's hover
-	// fills the panel's full width
+	// a stack of cards, a little apart, inside the panel's gutter
 	.chips {
 		display: flex;
 		flex-direction: column;
-		padding: 0.6rem 0 1.2rem;
+		gap: 0.6rem;
+		padding: 0.6rem var(--panel-gutter) 1.2rem;
 	}
 
-	.chip + .chip {
-		border-top: 1px dotted var(--color-border);
-	}
-
-	// one row per kind of hint, on a dotted rule, a stack of tinted boxes
-	// read as a wall of warnings; the mark in front carries the severity
+	// one card per kind of hint, a soft fill in its severity's colour with a
+	// thin border to match; the mark in front still says how bad, by shape
 	.chip {
+		--tone: var(--color-hint-info);
+		--tone-deep: var(--color-hint-info-deep);
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		width: 100%;
+		overflow: hidden;
 		font-size: var(--text-body);
-		line-height: 1.55;
+		line-height: 1.5;
 		text-align: left;
 		color: var(--color-text);
+		background: color-mix(in srgb, var(--tone) 75%, transparent);
+		border: 1px solid color-mix(in srgb, var(--tone-deep) 55%, transparent);
+		border-radius: 0.7rem;
 		user-select: none; // quick clicks were selecting the text instead
-		transition: background-color 0.15s ease;
+		transition:
+			background-color 0.15s ease,
+			border-color 0.15s ease;
 
-		// the whole row darkens, its unfolded lines with the heading
-		&:hover {
-			background: color-mix(in srgb, var(--color-text) 7%, transparent);
+		&[data-kind='warn'] {
+			--tone: var(--color-hint-warn);
+			--tone-deep: var(--color-hint-warn-deep);
+		}
+
+		&[data-kind='caution'] {
+			--tone: var(--color-hint-caution);
+			--tone-deep: var(--color-hint-caution-deep);
+		}
+
+		&[data-kind='good'] {
+			--tone: var(--color-hint-good);
+			--tone-deep: var(--color-hint-good-deep);
+		}
+
+		// pointed at or open: the fill comes up to full strength
+		&:hover,
+		&.open {
+			background: var(--tone);
+			border-color: var(--tone-deep);
 		}
 
 		// the text fills the row beside the cross-off ×
@@ -643,7 +704,7 @@
 			font: inherit;
 			line-height: inherit;
 			text-align: left;
-			color: var(--color-text-muted);
+			color: color-mix(in srgb, var(--color-text) 80%, transparent);
 			background: none;
 			border: 0;
 			cursor: pointer;
@@ -727,8 +788,8 @@
 		padding-top: 0;
 		border-top: 1px solid var(--color-border-divider);
 
-		.chip {
-			color: var(--color-text-muted);
+		.chips {
+			padding-top: 0;
 		}
 	}
 
