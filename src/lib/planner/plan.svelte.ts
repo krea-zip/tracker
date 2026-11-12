@@ -199,15 +199,16 @@ export class Plan {
 	// A miniature is an unsaved, two-year plan inside the welcome frame.
 	readonly miniature: boolean = false;
 
-	constructor({ miniature = false } = {}) {
+	/** `detached` never touches the browser's saved plan, in or out */
+	constructor({ miniature = false, detached = miniature }: { miniature?: boolean; detached?: boolean } = {}) {
 		this.miniature = miniature;
-		this.rehearsing = miniature;
+		this.rehearsing = detached;
 		// default plan = the department order for the chosen programmes;
 		// a saved plan (below) replaces it
-		if (!miniature) this.seedRecommended();
+		if (!detached) this.seedRecommended();
 		if (!browser) return;
 		try {
-			if (!miniature) restoreBoard(localStorage, (value) => this.applySave(value));
+			if (!detached) restoreBoard(localStorage, (value) => this.applySave(value));
 		} catch {
 			/* Browser storage can be blocked; the current session still works. */
 		}
