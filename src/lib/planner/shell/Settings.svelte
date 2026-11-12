@@ -10,6 +10,7 @@
 	import { byCode, subjectById } from '$lib/curriculum/data';
 	import Modal from '$lib/ui/Modal.svelte';
 	import FeedbackForm from './FeedbackForm.svelte';
+	import { parsePlanText } from '$lib/planner/importText';
 
 	let { onclose }: { onclose: () => void } = $props();
 	const plan = usePlan();
@@ -77,6 +78,28 @@
 		} catch {
 			exportError = 'Your browser blocked the clipboard. Try exporting a PDF.';
 		}
+	}
+
+	// ── paste a plan ──
+	// the text above, read back. It replaces the board, so it asks twice
+	let pasted = $state('');
+	let confirmPaste = $state(false);
+	let pasteTimer: ReturnType<typeof setTimeout>;
+	let parsed = $derived(pasted.trim() ? parsePlanText(pasted) : null);
+
+	function loadPasted() {
+		if (!parsed || !parsed.courses) return;
+		if (!confirmPaste) {
+			confirmPaste = true;
+			clearTimeout(pasteTimer);
+			pasteTimer = setTimeout(() => (confirmPaste = false), 4000);
+			return;
+		}
+		clearTimeout(pasteTimer);
+		confirmPaste = false;
+		plan.restore(parsed.save);
+		pasted = '';
+		onclose();
 	}
 
 	let exportError = $state('');
@@ -167,6 +190,35 @@
 		</div>
 		{#if exportError}<p class="note warn" role="alert">{exportError}</p>{/if}
 	</section>
+
+	<section>
+		<h3>paste a plan</h3>
+		<p class="note">Paste text from “copy plan as text” to put that plan back on the board.</p>
+		<textarea
+			class="paste"
+			rows="5"
+			bind:value={pasted}
+			placeholder="political science major + economics minor · 4-year · batch 2023&#10;&#10;y1 t1 (12 cr): KCCS101 …"
+			aria-label="plan text"
+		></textarea>
+		{#if parsed}
+			<p class="note">
+				{parsed.courses} course{parsed.courses === 1 ? '' : 's'} found{parsed.save.structure
+					? ''
+					: ', degree line not read: programmes stay as they are'}
+			</p>
+			{#if parsed.problems.length}
+				<ul class="note warn problems">
+					{#each parsed.problems as p, i (i)}<li>{p}</li>{/each}
+				</ul>
+			{/if}
+			<div class="actions">
+				<Button variant={confirmPaste ? 'danger' : 'secondary'} disabled={!parsed.courses} onclick={loadPasted}>
+					{confirmPaste ? 'replace board?' : 'load this plan'}
+				</Button>
+			</div>
+		{/if}
+	</section>
 </Modal>
 
 <style lang="scss">
@@ -249,6 +301,25 @@
 				color: var(--color-text);
 			}
 		}
+	}
+
+	.paste {
+		display: block;
+		width: 100%;
+		margin-top: 1rem;
+		padding: 0.8rem 1rem;
+		font: inherit;
+		font-size: 1.2rem;
+		line-height: 1.4;
+		color: var(--color-text);
+		background: var(--color-bg-light);
+		border: 1px solid var(--color-border-card);
+		border-radius: 0.6rem;
+		resize: vertical;
+	}
+
+	.problems {
+		padding-left: 1.6rem;
 	}
 
 	.actions {
